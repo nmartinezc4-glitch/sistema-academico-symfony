@@ -1,0 +1,114 @@
+{% extends 'layout/app.html.twig' %}
+{% set crumbs = [{label: 'Inicio', route: path('app_dashboard')}, {label: 'UI Kit'}] %}
+{% import 'components/_icons.html.twig' as ic %}
+{% block title %}UI Kit{% endblock %}
+{% block body %}
+{% include 'components/_page_header.html.twig' with {eyebrow: 'Design System', title: 'Aula Editorial UI — Kit', subtitle: 'Referencia visual de tokens y componentes. Solo entorno dev.'} %}
+
+<h2>Tipografía</h2>
+<div class="card" style="margin-bottom:var(--space-8)">
+  <p style="font-family:var(--font-display);font-size:48px;line-height:54px">Display XL · Fraunces</p>
+  <h1 style="margin:0">H1 40/46 editorial</h1>
+  <h2>H2 28/34 sección</h2>
+  <h3>H3 20/26 subtítulo</h3>
+  <p style="font-size:18px;line-height:28px">Body large 18/28</p>
+  <p>Body 15/24 — texto general de la interfaz académica.</p>
+  <p style="font-size:13px">Small 13/20 — metadatos.</p>
+  <p style="font-size:11px;text-transform:uppercase;letter-spacing:.08em">Micro 11/16</p>
+</div>
+
+<h2>Tokens de color</h2>
+<div class="grid-cards" style="margin-bottom:var(--space-8)">
+  {% set tokens = [
+    ['--paper', '#F6F1E8'], ['--paper-soft', '#FBF8F2'], ['--surface', '#FFFDFC'], ['--surface-muted', '#F1E9DF'],
+    ['--line', '#DED5C9'], ['--ink', '#342D29'], ['--ink-soft', '#6F655F'], ['--ink-muted', '#948981'],
+    ['--terracotta', '#C86F50'], ['--terracotta-deep', '#B5543D'], ['--burgundy', '#793B46'], ['--burgundy-deep', '#652C37'],
+    ['--success', '#6F8558'], ['--warning', '#C89536'], ['--danger', '#B94F45'], ['--info', '#667E88'],
+  ] %}
+  {% for t in tokens %}
+    <div class="card">
+      <div style="height:40px;border-radius:8px;background:{{ t[1] }};border:1px solid var(--line)"></div>
+      <strong>{{ t[0] }}</strong><br><span style="color:var(--ink-muted)">{{ t[1] }}</span>
+    </div>
+  {% endfor %}
+</div>
+
+<h2>Botones</h2>
+<div class="card" style="margin-bottom:var(--space-8)">
+  <button class="btn btn--primary">Primary</button>
+  <button class="btn btn--secondary">Secondary</button>
+  <button class="btn btn--ghost">Ghost</button>
+  <button class="btn btn--danger">Danger</button>
+  <button class="btn btn--primary" disabled>Disabled</button>
+</div>
+
+<h2>Badges</h2>
+<div class="card" style="margin-bottom:var(--space-8)">
+  {% include 'components/_status_badge.html.twig' with {status: 'APROBADO'} %}
+  {% include 'components/_status_badge.html.twig' with {status: 'REPROBADO'} %}
+  {% include 'components/_status_badge.html.twig' with {status: 'PENDIENTE'} %}
+  {% include 'components/_status_badge.html.twig' with {status: 'SIN_OFERTA'} %}
+  {% include 'components/_status_badge.html.twig' with {status: 'YA_APROBADO'} %}
+  {% include 'components/_status_badge.html.twig' with {status: 'ABIERTO'} %}
+  {% include 'components/_status_badge.html.twig' with {status: 'PLANIFICADO'} %}
+  {% include 'components/_status_badge.html.twig' with {status: 'CERRADO'} %}
+  {% include 'components/_status_badge.html.twig' with {status: 'ACTIVO'} %}
+  {% include 'components/_status_badge.html.twig' with {status: 'RETIRADO'} %}
+</div>
+
+<h2>Progress</h2>
+<div class="card" style="margin-bottom:var(--space-8)">
+  {% for v in [0, 34, 61, 78, 100] %}{% include 'components/_progress.html.twig' with {value: v, label: v ~ '%'} %}<hr style="border:none">{% endfor %}
+</div>
+
+<h2>Notice</h2>
+<div class="card" style="margin-bottom:var(--space-8)">
+  {% include 'components/_notice.html.twig' with {tone: 'info', message: 'Nota informativa del sistema.'} %}
+  {% include 'components/_notice.html.twig' with {tone: 'success', message: 'Operación completada correctamente.'} %}
+  {% include 'components/_notice.html.twig' with {tone: 'warning', message: 'Revisa los datos antes de continuar.'} %}
+  {% include 'components/_notice.html.twig' with {tone: 'danger', message: 'No fue posible completar la operación.'} %}
+</div>
+
+<h2>Tabla</h2>
+<div class="card" style="margin-bottom:var(--space-8)">
+  {% include 'components/_data_table.html.twig' with {columns: [
+    {key: 'a', label: 'Curso'}, {key: 'b', label: 'Estado', type: 'badge'}, {key: 'c', label: 'Avance', type: 'progress'},
+  ], rows: [{a: 'SIS101', b: 'APROBADO', c: 100}, {a: 'SIS204', b: 'PENDIENTE', c: 61}]} %}
+</div>
+
+<h2>Combobox (autocompletado)</h2>
+<form class="card" style="margin-bottom:var(--space-8);padding:var(--space-4)" method="get" action="{{ path('app_dev_ui_kit') }}">
+  {% import 'components/_combobox.html.twig' as cb %}
+  <div class="grid-3">
+    {{ cb.field({
+      id: 'demo-career', name: 'career', label: 'Carrera', icon: ic.cap(15),
+      value: app.request.query.get('career', ''),
+      options: [
+        {value: '3', label: 'Ingeniería en Sistemas', hint: 'INS'},
+        {value: '5', label: 'Ingeniería Industrial', hint: 'IIN'},
+        {value: '7', label: 'Administración de Empresas', hint: 'ADM'},
+      ],
+      allLabel: 'Todas las carreras', placeholder: 'Buscar carrera…',
+    }) }}
+    {{ cb.field({
+      id: 'demo-course', name: 'course', label: 'Curso', icon: ic.book(15),
+      value: app.request.query.get('course', ''),
+      options: [
+        {value: '101', label: 'SIS101 · Fundamentos de Programación', hint: '101'},
+        {value: '204', label: 'SIS204 · Bases de Datos I', hint: '204'},
+        {value: '315', label: 'SIS315 · Ingeniería de Software', hint: '315'},
+      ],
+      allLabel: 'Todos los cursos', placeholder: 'Buscar curso…',
+    }) }}
+  </div>
+  <button class="btn btn--primary" type="submit">Aplicar</button>
+</form>
+
+<h2>Paginación</h2>
+<div class="card" style="margin-bottom:var(--space-8)">
+  {% include 'components/_pagination.html.twig' with {
+    page: 3, pages: 9, total: 87, perPage: 10,
+    range: {from: 21, to: 30}, label: 'registros de demostración',
+  } only %}
+</div>
+{% endblock %}

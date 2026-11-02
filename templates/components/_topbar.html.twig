@@ -1,0 +1,45 @@
+{% set teacherOnly = is_granted('ROLE_DOCENTE') and not is_granted('ROLE_COORDINACION') and not is_granted('ROLE_DIRECCION') %}
+{% set institutionalSearch = is_granted('ROLE_COORDINACION') or is_granted('ROLE_DIRECCION') %}
+<header class="topbar">
+  <button class="topbar__menu-btn" data-action="sidebar#toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+
+  {% if teacherOnly %}
+    <form class="topbar__search" role="search" method="get" action="{{ path('app_grade_entry') }}">
+      <div class="field" style="margin-bottom:0">
+        <label class="skip-link" for="global-search">Buscar entre mis estudiantes</label>
+        <input id="global-search" name="q" type="search" placeholder="Buscar únicamente entre mis estudiantes…" autocomplete="off">
+      </div>
+    </form>
+  {% elseif institutionalSearch %}
+    <form class="topbar__search" role="search" method="get" action="{{ path('app_student_index') }}">
+      <div class="field" style="margin-bottom:0">
+        <label class="skip-link" for="global-search">Buscar estudiantes</label>
+        <input id="global-search" name="q" type="search" placeholder="Buscar estudiantes por nombre o carné…" autocomplete="off">
+      </div>
+    </form>
+  {% else %}
+    <div class="topbar__search" aria-hidden="true"></div>
+  {% endif %}
+
+  <nav class="topbar__user" aria-label="Cuenta">
+    <span class="avatar-top" aria-hidden="true">
+      {% if app.user and app.user.photoPath %}
+        <img src="{{ app.request.basePath ~ app.user.photoPath }}" alt="">
+      {% elseif app.user %}
+        <span>{{ app.user.initials }}</span>
+      {% else %}
+        <span>U</span>
+      {% endif %}
+    </span>
+    <span class="topbar__identity">
+      <strong>{{ app.user ? app.user.displayName : 'Usuario institucional' }}</strong>
+      <small>{{ app.user ? app.user.primaryRoleLabel : 'Sesión no autenticada' }}</small>
+    </span>
+    {% if app.user %}
+      <form method="post" action="{{ path('app_logout') }}">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+        <button class="topbar__logout" type="submit">Salir</button>
+      </form>
+    {% endif %}
+  </nav>
+</header>

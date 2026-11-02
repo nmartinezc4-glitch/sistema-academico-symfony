@@ -1,0 +1,165 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set crumbs = [{label: 'Inicio', route: path('app_dashboard')}, {label: 'Reportes', route: path('app_report_index')}, {label: 'Avance por ciclo'}] %}
+{% block title %}Avance por ciclo{% endblock %}
+{% block body %}
+{% include 'components/_page_header.html.twig' with {
+  eyebrow: 'Reportes',
+  title: 'Avance curricular por ciclo',
+  subtitle: 'Seguimiento del cumplimiento académico por ciclo curricular.',
+  quote: '“Ciclo completado es un paso más hacia un futuro con propósito.”',
+  quoteAuthor: 'Coordinación Académica',
+  hero: true
+} %}
+
+{% set careersH = {} %}
+{% set pensumsH = {} %}
+{% set cyclesH = {} %}
+{% for r in rows %}
+  {% set careersH = careersH|merge({(r.career): true}) %}
+  {% set pensumsH = pensumsH|merge({(r.curriculum): true}) %}
+  {% set cyclesH = cyclesH|merge({(r.cycle): true}) %}
+{% endfor %}
+{% set allCareers = careersH|keys|sort %}
+{% set allPensums = pensumsH|keys|sort %}
+{% set allCycles = cyclesH|keys|sort %}
+{% set fcareer = app.request.query.get('carrera', '') %}
+{% set fpensum = app.request.query.get('pensum', '') %}
+{% set fcycle = app.request.query.get('ciclo', '') %}
+{% set rows = rows|filter(r =>
+  (fcareer == '' or r.career == fcareer)
+  and (fpensum == '' or r.curriculum == fpensum)
+  and (fcycle == '' or r.cycle == fcycle)
+) %}
+
+<form class="vd-filters" method="get" aria-label="Filtros del reporte">
+  <div class="field">
+    <label for="f-career">Carrera</label>
+    <select id="f-career" name="carrera">
+      <option value="">Todas las carreras</option>
+      {% for c in allCareers %}<option value="{{ c }}" {% if fcareer == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-pensum">Pensum</label>
+    <select id="f-pensum" name="pensum">
+      <option value="">Todos los pensums</option>
+      {% for p in allPensums %}<option value="{{ p }}" {% if fpensum == p %}selected{% endif %}>{{ p }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-cycle">Ciclo</label>
+    <select id="f-cycle" name="ciclo">
+      <option value="">Todos los ciclos</option>
+      {% for c in allCycles %}<option value="{{ c }}" {% if fcycle == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="vd-filters__actions">
+    <a class="btn btn--ghost" href="{{ path('app_report_progress_cycle') }}">{{ ic.refresh(16) }} Limpiar</a>
+    {% include 'components/_report_export_actions.html.twig' with {report: 'avance-ciclo'} %}
+    <button class="btn btn--primary" type="submit">{{ ic.chart(16) }} Generar reporte</button>
+  </div>
+</form>
+
+{% if rows is empty %}
+  <div class="empty-state vd-empty">
+    {{ ic.layers(34) }}
+    <strong>Selecciona los filtros para generar el reporte</strong>
+    <p>No hay ciclos que coincidan con los criterios seleccionados.</p>
+  </div>
+{% else %}
+  {% set total = rows|length %}
+  {% set completos = rows|filter(r => r.cyclestatus == 'COMPLETO')|length %}
+  {% set incompletos = total - completos %}
+  {% set avg = rows|reduce((a, r) => a + (r.progress ?? 0), 0) / (total ?: 1) %}
+  {% set max = rows|reduce((a, r) => (r.progress ?? 0) > a ? (r.progress ?? 0) : a, 0) %}
+  {% set minP = rows|reduce((a, r) => a is null ? (r.progress ?? 0) : ((r.progress ?? 0) < a ? (r.progress ?? 0) : a), null) %}
+  {% set pctComplete = total ? (completos * 100 / total)|round : 0 %}
+
+  <div class="vd-kpis vd-kpis--4">
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.check(24), tone: 'success',
+      label: 'Ciclos completos', value: completos,
+      caption: pctComplete ~ ' % del total analizado'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.pie(24), tone: 'warning',
+      label: 'Ciclos incompletos', value: incompletos,
+      caption: (total ? ((incompletos * 100 / total)|round) : 0) ~ ' % del total analizado'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.trend(24), tone: 'terracotta',
+      label: 'Cumplimiento promedio', value: avg|round(1), suffix: '%',
+      caption: 'De los ' ~ total ~ ' ciclos con avance registrado', progress: avg|round
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.users(24), tone: 'info',
+      label: 'Estudiantes por ciclo', value: rows|reduce((a, r) => a > (r.students ?? 0) ? a : (r.students ?? 0), 0),
+      caption: 'Máximo de matriculados en un ciclo'
+    } %}
+  </div>
+
+  <div class="vd-cycle-layout">
+    <section class="vd-panel">
+      <h2 class="vd-panel__head">{{ ic.layers(20) }} Progresión por ciclos</h2>
+      <div class="vd-cycle-list">
+        {% for row in rows %}
+          {% set p = row.progress ?? 0 %}
+          <article class="vd-cycle-card">
+            <div class="vd-cycle-card__name">{{ row.cycle }}</div>
+            {% if row.cyclestatus == 'COMPLETO' %}
+              {% include 'components/_status_badge.html.twig' with {status: 'APROBADO', label: 'COMPLETO'} %}
+            {% else %}
+              {% include 'components/_status_badge.html.twig' with {status: 'PENDIENTE', label: 'EN PROGRESO'} %}
+            {% endif %}
+            {% include 'components/_progress.html.twig' with {value: p|round} %}
+            <div class="vd-cycle-card__meta">
+              <span>{{ ic.cap(14) }} {{ row.career }}</span>
+              <span>{{ ic.book(14) }} {{ row.curriculum }}</span>
+              <span>{{ ic.users(14) }} {{ row.students }} estudiantes</span>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <aside class="vd-panel">
+      <h2 class="vd-panel__head">{{ ic.pie(20) }} Situación curricular</h2>
+      <div class="vd-donut-wrap">
+        <div class="donut" style="background: conic-gradient(var(--success) 0 {{ pctComplete }}%, var(--warning) {{ pctComplete }}% 100%)">
+          <div class="donut__hole">
+            <strong>{{ avg|round(0) }}%</strong>
+            <span>promedio</span>
+          </div>
+        </div>
+        <div class="vd-donut-legend">
+          <span class="row"><span class="dot dot--ok"></span> Completos <b>{{ completos }}</b></span>
+          <span class="row"><span class="dot dot--warn"></span> En curso <b>{{ incompletos }}</b></span>
+        </div>
+      </div>
+      <div class="vd-compare">
+        <div><strong>{{ max|round(1) }}%</strong><span>Máximo</span></div>
+        <div><strong>{{ minP is null ? '—' : minP|round(1) ~ '%' }}</strong><span>Mínimo</span></div>
+        <div><strong>{{ avg|round(1) }}%</strong><span>Promedio</span></div>
+      </div>
+      <p class="help" style="color:var(--ink-muted);margin-bottom:0">El estado indica si el ciclo curricular ya fue completado o continúa en progreso.</p>
+    </aside>
+  </div>
+
+  <section class="vd-panel">
+    <h2 class="vd-panel__head">{{ ic.table(20) }} Detalle por ciclo</h2>
+    {% include 'components/_data_table.html.twig' with {columns: [
+      {key: 'cycle', label: 'Ciclo'},
+      {key: 'career', label: 'Carrera'},
+      {key: 'curriculum', label: 'Pensum'},
+      {key: 'students', label: 'Estudiantes'},
+      {key: 'progress', label: 'Avance', type: 'progress'},
+    ], rows: rows, emptyMessage: 'No hay datos para los filtros seleccionados.'} %}
+    <div class="vd-legend" style="border:1px solid var(--line);border-top:none;border-radius:0 0 var(--radius-card) var(--radius-card);margin-top:-1px">
+      <strong>Leyenda:</strong>
+      <span><span class="dot dot--ok"></span> COMPLETO: el ciclo curricular fue completado</span>
+      <span><span class="dot dot--warn"></span> EN PROGRESO: ciclo incompleto</span>
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set crumbs = [{label:'Inicio'}] %}
+{% block title %}Mi panel docente · Sistema Académico{% endblock %}
+{% block body %}
+<div class="va-page va-page--dashboard">
+  <section class="hero-editorial va-hero">
+    <div class="hero-editorial__eyebrow">MI ESPACIO DOCENTE</div>
+    <h1>Bienvenido, {{ app.user.displayName }}</h1>
+    <div class="va-hero__row">
+      <div class="va-hero__period">
+        <div class="va-hero__label">Período académico</div>
+        <p class="hero-editorial__period">{{ vm.period.year ?? '—' }} · Semestre {{ vm.period.term == 'I' ? 'I' : 'II' }}</p>
+      </div>
+      <blockquote class="hero-editorial__quote">“En este espacio solo ves la información vinculada a tus asignaciones docentes.”</blockquote>
+    </div>
+    <hr class="va-hero__rule">
+    <p class="va-hero__lead">Tus cursos, tus estudiantes y las calificaciones que te corresponde gestionar.</p>
+  </section>
+
+  <div class="grid-metrics va-kpis">
+    {% include 'components/_metric_card.html.twig' with {icon: ic.glyph('book',26), tone:'terracotta', label:'Mis ofertas', value:vm.assignedOfferings, caption:'Cursos y secciones asignados'} %}
+    {% include 'components/_metric_card.html.twig' with {icon: ic.glyph('users',26), tone:'success', label:'Mis estudiantes', value:vm.assignedStudents, caption:'Estudiantes vinculados a mis ofertas'} %}
+    {% include 'components/_metric_card.html.twig' with {icon: ic.glyph('check',26), tone:'success', label:'Calificados', value:vm.gradedPercentage, suffix:'%', progress:vm.gradedPercentage, caption:vm.resultsGraded ~ ' resultados registrados'} %}
+    {% include 'components/_metric_card.html.twig' with {icon: ic.glyph('clock',26), tone:'warning', label:'Pendientes', value:vm.resultsPending, caption:'Resultados por calificar'} %}
+  </div>
+
+  <div class="va-duo">
+    <section class="card va-panel">
+      <div class="va-panel__head">
+        <h2 class="va-panel__title">{{ ic.glyph('bookmark',20) }}<span>Mis ofertas académicas</span></h2>
+        <a class="va-link" href="{{ path('app_grade_entry') }}">Ingreso de notas {{ ic.glyph('arrowRight',14) }}</a>
+      </div>
+      <div class="va-periods">
+        {% for o in vm.offerings %}
+          <article class="period-card va-period-card{% if o.periodStatus == 'ABIERTO' %} is-open{% endif %}">
+            <div class="va-period-card__head">
+              <strong>{{ o.courseCode }} · {{ o.course }}</strong>
+              {% include 'components/_status_badge.html.twig' with {status:o.periodStatus} %}
+            </div>
+            <div class="va-period-card__meta">{{ o.period }} · Sección {{ o.section }} · {{ o.curriculum }}</div>
+            <div class="va-period-card__meta">{{ o.studentsCount }} estudiantes · {{ o.pendingCount }} pendientes</div>
+          </article>
+        {% else %}
+          <p class="va-panel__caption">Aún no tienes ofertas académicas asignadas. Coordinación debe vincularte antes de que puedas ingresar notas.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="card va-panel">
+      <div class="va-panel__head"><h2 class="va-panel__title">{{ ic.glyph('bolt',20) }}<span>Acciones docentes</span></h2></div>
+      <div class="va-quick">
+        <a class="btn btn--secondary" href="{{ path('app_grade_entry') }}">{{ ic.glyph('pencil',16) }}<span>Ingresar notas</span></a>
+        <a class="btn btn--secondary" href="{{ path('app_student_index') }}">{{ ic.glyph('users',16) }}<span>Mis estudiantes</span></a>
+        <a class="btn btn--secondary" href="{{ path('app_transcript_index') }}">{{ ic.glyph('file',16) }}<span>Expedientes asignados</span></a>
+        <a class="btn btn--secondary" href="{{ path('app_report_index') }}">{{ ic.glyph('chart',16) }}<span>Mis reportes</span></a>
+      </div>
+      <div style="margin-top:var(--space-5)">
+        <span class="va-panel__caption">Aprobación sobre tus resultados calificados</span>
+        <div class="va-progress-row">
+          <div class="progress va-progress--lg"><span class="progress__bar" style="width:{{ vm.approvalOnGraded }}%"></span></div>
+          <strong class="va-progress-row__value">{{ vm.approvalOnGraded }} %</strong>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

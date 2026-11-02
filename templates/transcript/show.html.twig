@@ -1,0 +1,281 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: 'Alumnos', route: path('app_student_index')},
+  {label: vm.fullName, route: path('app_student_show', {id: vm.id})},
+  {label: 'Expediente académico'}
+] %}
+
+{% block title %}Expediente · {{ vm.fullName }}{% endblock %}
+
+{% block body %}
+{% set hasEnrollment = vm.currentPeriod is not empty %}
+{% set totalCourses = vm.required|default(vm.approved + vm.pending) %}
+
+<div class="va-page tx-page">
+
+  <header class="page-header page-header--hero tx-hero">
+    <div class="page-header__main">
+      <p class="tx-hero__eyebrow">Expediente académico</p>
+      <h1>{{ vm.fullName }}</h1>
+      <p class="subtitle tx-hero__meta">
+        <span>{{ vm.code }}</span>
+        <span aria-hidden="true">·</span>
+        <span>{{ vm.career|default('Sin carrera') }}</span>
+        <span aria-hidden="true">·</span>
+        <span>{{ vm.curriculum|default('Sin pensum') }}</span>
+      </p>
+      <blockquote class="page-header__quote">“El historial académico debe contar una historia verificable.”</blockquote>
+    </div>
+
+    <div class="tx-hero__actions">
+      <a class="btn btn--secondary" href="{{ path('app_student_show', {id: vm.id}) }}">
+        {{ ic.glyph('arrowLeft', 16) }}<span>Volver al perfil</span>
+      </a>
+      {% if is_granted('ROLE_COORDINACION') %}
+        <a class="btn btn--primary" href="{{ path('app_student_edit', {id: vm.id}) }}">
+          {{ ic.glyph('pencil', 16) }}<span>Editar ficha</span>
+        </a>
+      {% endif %}
+    </div>
+  </header>
+
+  <section class="card tx-student" aria-label="Identidad y programa académico">
+    <div class="tx-student__identity">
+      <span class="avatar tx-avatar">
+        {% if vm.photoPath and vm.photoPath starts with '/uploads/students/' %}
+          <img src="{{ vm.photoPath }}" alt="Fotografía de {{ vm.fullName }}">
+        {% else %}
+          <span aria-hidden="true">{{ vm.firstNames|slice(0, 1) ~ vm.lastNames|slice(0, 1) }}</span>
+        {% endif %}
+      </span>
+
+      <div>
+        <div class="tx-student__name-row">
+          <h2>{{ vm.fullName }}</h2>
+          {% include 'components/_status_badge.html.twig' with {status: vm.status} %}
+        </div>
+        <p class="tx-student__code">{{ vm.code }}</p>
+        <div class="tx-student__personal">
+          <span>{{ ic.glyph('calendar', 14) }} {{ vm.birthDate ? vm.birthDate|date('d M Y') : 'Nacimiento no registrado' }}</span>
+          {% if vm.address %}
+            <span>{{ ic.glyph('home', 14) }} {{ vm.address }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <dl class="tx-program">
+      <div>
+        <dt>{{ ic.glyph('cap', 15) }} Carrera</dt>
+        <dd>{{ vm.career|default('Sin carrera asignada') }}</dd>
+      </div>
+      <div>
+        <dt>{{ ic.glyph('book', 15) }} Pensum</dt>
+        <dd>{{ vm.curriculum|default('Sin pensum asignado') }}</dd>
+      </div>
+      <div>
+        <dt>{{ ic.glyph('calendar', 15) }} Año de ingreso</dt>
+        <dd>{{ vm.entryYear|default('—') }}</dd>
+      </div>
+      <div>
+        <dt>{{ ic.glyph('target', 15) }} Estado del programa</dt>
+        <dd>{% include 'components/_status_badge.html.twig' with {status: vm.programStatus|default(vm.status)} %}</dd>
+      </div>
+    </dl>
+
+    <div class="tx-enrollment{{ hasEnrollment ? '' : ' tx-enrollment--empty' }}">
+      <span class="tx-enrollment__icon">{{ ic.glyph('calendar', 18) }}</span>
+      <div>
+        <span class="tx-enrollment__label">{{ hasEnrollment ? 'Inscripción académica' : 'Sin inscripción académica' }}</span>
+        <strong>{{ hasEnrollment ? vm.currentPeriod : 'Sin período registrado' }}</strong>
+        <small>
+          {% if hasEnrollment %}
+            {{ vm.cycle|default('Ciclo no registrado') }}{% if vm.section %} · Sección {{ vm.section }}{% endif %}
+          {% else %}
+            El programa está creado, pero aún no existe estudiante-período.
+          {% endif %}
+        </small>
+      </div>
+      {% include 'components/_status_badge.html.twig' with {status: vm.enrollmentStatus|default('SIN_REGISTRO')} %}
+    </div>
+  </section>
+
+  {% include 'components/_tabs.html.twig' with {
+    al: 'Navegación del expediente',
+    items: [
+      {label: 'Historial académico', active: true, icon: 'book'},
+      {label: 'Perfil', url: path('app_student_show', {id: vm.id}), icon: 'user'},
+      vm.curriculumId
+        ? {label: 'Pensum', url: path('app_curriculum_show', {id: vm.curriculumId}), icon: 'layers'}
+        : {label: 'Pensum', icon: 'layers', disabled: true},
+      hasEnrollment and canGradeStudent|default(false)
+        ? {label: 'Ingreso de notas', url: path('app_grade_entry', {student: vm.id}), icon: 'pencil'}
+        : {label: 'Ingreso de notas', icon: 'pencil', disabled: true}
+    ]
+  } %}
+
+  <div class="tx-layout">
+    <main class="tx-history">
+      <div class="tx-section-head">
+        <div>
+          <p class="tx-section-head__eyebrow">Historial completo</p>
+          <h2>Resultados por período</h2>
+          <p>{{ history|length }} período{{ history|length == 1 ? '' : 's' }} · {{ totalResults }} resultado{{ totalResults == 1 ? '' : 's' }} registrado{{ totalResults == 1 ? '' : 's' }}</p>
+        </div>
+      </div>
+
+      {% for period in history %}
+        <article class="card tx-period{{ period.periodStatus == 'ABIERTO' ? ' tx-period--open' : '' }}">
+          <header class="tx-period__head">
+            <div class="tx-period__identity">
+              <span class="tx-period__marker" aria-hidden="true">{{ ic.glyph('calendar', 16) }}</span>
+              <div>
+                <div class="tx-period__title-row">
+                  <h3>{{ period.periodLabel }}</h3>
+                  {% include 'components/_status_badge.html.twig' with {status: period.periodStatus} %}
+                  {% include 'components/_status_badge.html.twig' with {status: period.enrollmentStatus} %}
+                </div>
+                <p>{{ period.cycle }} · Sección {{ period.section }}</p>
+              </div>
+            </div>
+
+            <div class="tx-period__stats">
+              <div><span>Calificados</span><strong>{{ period.gradedResults }} / {{ period.totalResults }}</strong></div>
+              <div><span>Promedio</span><strong>{{ period.average is not null ? period.average|number_format(2, '.', '') : '—' }}</strong></div>
+              <div><span>Aprobados</span><strong>{{ period.approvedResults }}</strong></div>
+            </div>
+          </header>
+
+          {% if period.results|length > 0 %}
+            <div class="table-wrap tx-results-table">
+              <table class="data">
+                <thead>
+                  <tr>
+                    <th scope="col">Código</th>
+                    <th scope="col">Curso</th>
+                    <th scope="col">Tipo</th>
+                    <th scope="col">Sección</th>
+                    <th scope="col">Nota</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col">Intento</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for result in period.results %}
+                    <tr>
+                      <td><span class="tx-course-code">{{ result.courseCode }}</span></td>
+                      <td><strong>{{ result.courseName }}</strong></td>
+                      <td>{% include 'components/_status_badge.html.twig' with {status: result.required} %}</td>
+                      <td>{{ result.section }}</td>
+                      <td>
+                        {% if result.grade is not null %}
+                          <strong class="tx-grade">{{ result.grade|number_format(2, '.', '') }}</strong>
+                        {% else %}
+                          <span class="tx-muted">—</span>
+                        {% endif %}
+                      </td>
+                      <td>{% include 'components/_status_badge.html.twig' with {status: result.status} %}</td>
+                      <td>{{ result.attempt }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="tx-period__empty">
+              {% include 'components/_empty_state.html.twig' with {
+                title: 'Sin resultados en este período',
+                message: period.periodStatus == 'ABIERTO'
+                  ? 'El período está registrado, pero todavía no existen calificaciones.'
+                  : 'No hay resultados académicos asociados a esta inscripción.'
+              } %}
+            </div>
+          {% endif %}
+        </article>
+      {% else %}
+        <section class="card tx-empty">
+          {% include 'components/_empty_state.html.twig' with {
+            title: 'Sin historial académico',
+            message: 'El estudiante tiene un programa académico, pero todavía no posee inscripciones a períodos.'
+          } %}
+        </section>
+      {% endfor %}
+    </main>
+
+    <aside class="tx-rail" aria-label="Resumen del expediente">
+      <section class="card tx-summary">
+        <div class="tx-card-head">
+          <h2>{{ ic.glyph('chart', 18) }}<span>Avance curricular</span></h2>
+        </div>
+
+        <div class="tx-progress">
+          <div class="tx-progress__ring" style="--tx-progress: {{ vm.progress|round }}%">
+            <div class="tx-progress__hole">
+              <strong>{{ vm.progress|round }}%</strong>
+              <span>avance</span>
+            </div>
+          </div>
+
+          <dl class="tx-progress__legend">
+            <div><dt>Aprobados</dt><dd>{{ vm.approved }}</dd></div>
+            <div><dt>Pendientes</dt><dd>{{ vm.pending }}</dd></div>
+            <div><dt>Reprobaciones históricas</dt><dd>{{ vm.repeats }}</dd></div>
+            <div><dt>Cursos obligatorios</dt><dd>{{ totalCourses }}</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="card tx-context">
+        <div class="tx-card-head">
+          <h2>{{ ic.glyph('idCard', 18) }}<span>Situación académica</span></h2>
+        </div>
+
+        <dl class="tx-context__list">
+          <div><dt>Programa</dt><dd>{{ status_label(vm.programStatus|default(vm.status)) }}</dd></div>
+          <div><dt>Inscripción</dt><dd>{{ status_label(vm.enrollmentStatus|default('SIN_REGISTRO')) }}</dd></div>
+          <div><dt>Período</dt><dd>{{ vm.currentPeriod|default('—') }}</dd></div>
+          <div><dt>Ciclo</dt><dd>{{ vm.cycle|default('—') }}</dd></div>
+          <div><dt>Sección</dt><dd>{{ vm.section|default('—') }}</dd></div>
+        </dl>
+      </section>
+
+      <section class="card tx-actions">
+        <div class="tx-card-head">
+          <h2>{{ ic.glyph('bolt', 18) }}<span>Acciones</span></h2>
+        </div>
+
+        <div class="tx-actions__list">
+          {% if hasEnrollment and canGradeStudent|default(false) %}
+            <a class="btn btn--primary" href="{{ path('app_grade_entry', {student: vm.id}) }}">
+              {{ ic.glyph('pencil', 15) }}<span>Ingresar notas</span>
+            </a>
+          {% else %}
+            <button class="btn btn--primary" type="button" disabled title="Primero debe existir una inscripción académica.">
+              {{ ic.glyph('pencil', 15) }}<span>Ingresar notas</span>
+            </button>
+          {% endif %}
+
+          {% if vm.curriculumId %}
+            <a class="btn btn--secondary" href="{{ path('app_curriculum_show', {id: vm.curriculumId}) }}">
+              {{ ic.glyph('layers', 15) }}<span>Ver pensum</span>
+            </a>
+          {% endif %}
+
+          <a class="btn btn--secondary" href="{{ path('app_student_show', {id: vm.id}) }}">
+            {{ ic.glyph('user', 15) }}<span>Ver perfil</span>
+          </a>
+          {% if is_granted('ROLE_COORDINACION') %}
+            <a class="btn btn--secondary" href="{{ path('app_student_edit', {id: vm.id}) }}">
+              {{ ic.glyph('pencil', 15) }}<span>Editar estudiante</span>
+            </a>
+          {% endif %}
+        </div>
+      </section>
+    </aside>
+  </div>
+
+</div>
+{% endblock %}

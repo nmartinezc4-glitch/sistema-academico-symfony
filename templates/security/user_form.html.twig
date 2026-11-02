@@ -1,0 +1,73 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set creating = mode == 'create' %}
+{% set crumbs = [{label:'Inicio', route:path('app_dashboard')},{label:'Usuarios y roles', route:path('app_security_user_index')},{label: creating ? 'Nuevo usuario' : 'Editar usuario'}] %}
+{% block title %}{{ creating ? 'Nuevo usuario' : 'Editar usuario' }} · Sistema Académico{% endblock %}
+{% block body %}
+<div class="va-page cal-form-page">
+  <header class="page-header page-header--hero cal-hero">
+    <div class="page-header__main">
+      <p class="cal-eyebrow">Seguridad</p>
+      <h1>{{ creating ? 'Nuevo usuario institucional' : 'Editar usuario' }}</h1>
+      <p class="subtitle">La identidad, fotografía y roles pertenecen al usuario autenticado que Symfony carga en cada sesión.</p>
+    </div>
+    <div class="page-header__action"><a class="btn btn--secondary" href="{{ path('app_security_user_index') }}">Volver</a></div>
+  </header>
+
+  <form method="post" enctype="multipart/form-data" class="card cal-form" novalidate>
+    <input type="hidden" name="_token" value="{{ csrf_token(creating ? 'app_security_user_new' : 'app_security_user_edit') }}">
+    {% if errors|length %}
+      <div class="notice notice--danger"><strong>Revisa la información:</strong><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>
+    {% endif %}
+
+    <section class="sf-personal-grid" style="margin-bottom:var(--space-6)">
+      <div class="sf-photo" data-controller="photo-preview">
+        <div class="sf-photo__preview-wrap" data-photo-preview-target="preview">
+          {% if not creating and form.photoPath|default(null) %}
+            <img src="{{ app.request.basePath ~ form.photoPath }}" alt="Fotografía actual del usuario" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">
+          {% else %}
+            <span class="sf-photo__icon" aria-hidden="true">{{ ic.glyph('camera', 24) }}</span>
+            <strong>Fotografía</strong>
+            <span class="sf-photo__hint">JPG, PNG o WEBP · máximo 2 MB</span>
+          {% endif %}
+        </div>
+        <label class="btn btn--secondary sf-photo__button" for="photo">{{ ic.glyph('upload', 15) }}<span>{{ creating ? 'Seleccionar imagen' : 'Reemplazar fotografía' }}</span></label>
+        <input id="photo" class="sf-photo__input" name="photo" type="file" accept="image/jpeg,image/png,image/webp" data-photo-preview-target="input" data-action="change->photo-preview#previewLocal">
+        {% if not creating and form.photoPath|default(null) %}
+          <label class="help"><input type="checkbox" name="removePhoto" value="1"> Quitar fotografía actual</label>
+        {% endif %}
+      </div>
+
+      <div class="sf-fields">
+        <div class="field"><label for="firstNames">Nombres *</label><input id="firstNames" name="firstNames" value="{{ form.firstNames|default('') }}" required></div>
+        <div class="field"><label for="lastNames">Apellidos *</label><input id="lastNames" name="lastNames" value="{{ form.lastNames|default('') }}" required></div>
+        <div class="field sf-field--wide"><label for="email">Correo institucional *</label><input id="email" type="email" name="email" value="{{ form.email|default('') }}" autocomplete="username" required></div>
+        <div class="field"><label for="password">{{ creating ? 'Contraseña inicial *' : 'Nueva contraseña' }}</label><input id="password" type="password" name="password" autocomplete="new-password" {{ creating ? 'required' : '' }}><div class="help">{{ creating ? 'Mínimo 10 caracteres.' : 'Déjala vacía para conservar la contraseña actual.' }}</div></div>
+        <div class="field"><label for="passwordConfirm">Confirmar contraseña</label><input id="passwordConfirm" type="password" name="passwordConfirm" autocomplete="new-password" {{ creating ? 'required' : '' }}></div>
+      </div>
+    </section>
+
+    <fieldset class="field">
+      <legend>Roles funcionales *</legend>
+      <div class="vc-cards">
+        {% for role in roles %}
+          <label class="card" style="padding:var(--space-4);cursor:pointer">
+            <input type="checkbox" name="roleIds[]" value="{{ role.id }}" {% if role.id in form.roleIds|default([]) %}checked{% endif %}>
+            <strong>{{ role.name }}</strong>
+            <small>{{ role.description }}</small>
+          </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    {% if not creating %}
+      <label class="field" style="margin-top:var(--space-4)"><span>Estado de la cuenta</span><span><input type="checkbox" name="active" value="1" {% if form.active %}checked{% endif %}> Cuenta activa</span></label>
+    {% endif %}
+
+    <div class="cal-form__actions">
+      <a class="btn btn--secondary" href="{{ path('app_security_user_index') }}">Cancelar</a>
+      <button class="btn btn--primary" type="submit">{{ ic.glyph('check',16) }}<span>{{ creating ? 'Crear usuario' : 'Guardar cambios' }}</span></button>
+    </div>
+  </form>
+</div>
+{% endblock %}

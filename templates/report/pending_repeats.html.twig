@@ -1,0 +1,207 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set crumbs = [{label: 'Inicio', route: path('app_dashboard')}, {label: 'Reportes', route: path('app_report_index')}, {label: 'Pendientes y repitencias'}] %}
+{% block title %}Pendientes y repitencias{% endblock %}
+{% block body %}
+{% include 'components/_page_header.html.twig' with {
+  eyebrow: 'Reportes',
+  title: 'Pendientes y repitencias',
+  subtitle: 'Estudiantes con cursos pendientes, repitencias activas y alertas académicas.',
+  quote: '“Acompañar también es abrir caminos hacia nuevas oportunidades.”',
+  quoteAuthor: 'Coordinación Académica',
+  hero: true
+} %}
+
+{% set periods = [] %}
+{% for r in rows %}{% if r.period not in periods %}{% set periods = periods|merge([r.period]) %}{% endif %}{% endfor %}
+{% set periods = periods|sort|reverse %}
+{% set fperiod = app.request.query.get('periodo', '') %}
+{% set fstatus = app.request.query.get('estado', '') %}
+{% set falert = app.request.query.get('alerta', '') %}
+{% set fq = app.request.query.get('q', '') %}
+{% set needle = fq|lower|trim %}
+{% set rows = rows|filter(r =>
+  (fperiod == '' or r.period == fperiod)
+  and (fstatus == '' or r.status == fstatus)
+  and (falert == '' or r.alertType == falert)
+  and (needle == '' or needle in (r.student|lower))
+) %}
+<form class="vd-filters" method="get" aria-label="Filtros del reporte">
+  <h2 class="vd-filters__title">{{ ic.filter(18) }} Filtros de reporte</h2>
+  <div class="field">
+    <label for="f-period">Período</label>
+    <select id="f-period" name="periodo">
+      <option value="">Todos los períodos</option>
+      {% for p in periods %}<option value="{{ p }}" {% if fperiod == p %}selected{% endif %}>{{ p }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-status">Estado</label>
+    <select id="f-status" name="estado">
+      <option value="">Todos los estados</option>
+      <option value="REPROBADO" {% if fstatus == 'REPROBADO' %}selected{% endif %}>Reprobado</option>
+      <option value="PENDIENTE" {% if fstatus == 'PENDIENTE' %}selected{% endif %}>Pendiente</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-alert">Tipo de alerta</label>
+    <select id="f-alert" name="alerta">
+      <option value="">Todos los tipos</option>
+      <option value="REPITENCIA" {% if falert == 'REPITENCIA' %}selected{% endif %}>Repitencia</option>
+      <option value="PENDIENTE" {% if falert == 'PENDIENTE' %}selected{% endif %}>Pendiente</option>
+    </select>
+  </div>
+  <div class="field field--wide" style="flex:2 1 220px">
+    <label for="f-student">Buscar estudiante</label>
+    <div class="icon-input">{{ ic.search(16) }}
+      <input id="f-student" type="search" name="q" value="{{ fq }}" placeholder="Nombre del estudiante…">
+    </div>
+  </div>
+  <div class="vd-filters__actions">
+    <a class="btn btn--ghost" href="{{ path('app_report_pending_repeats') }}">{{ ic.refresh(16) }} Limpiar</a>
+    {% include 'components/_report_export_actions.html.twig' with {report: 'pendientes-repitencias'} %}
+    <button class="btn btn--primary" type="submit">{{ ic.search(16) }} Aplicar filtros</button>
+  </div>
+</form>
+
+{% if rows is empty %}
+  <div class="empty-state vd-empty">
+    {{ ic.check(34) }}
+    <strong>Sin alertas para los filtros seleccionados</strong>
+    <p>No se encontraron cursos pendientes ni repitencias con estos criterios.</p>
+  </div>
+{% else %}
+  {% set total = rows|length %}
+  {% set repeats = rows|filter(r => r.alertType == 'REPITENCIA')|length %}
+  {% set pendings = rows|filter(r => r.alertType == 'PENDIENTE')|length %}
+  {% set studentNames = [] %}
+  {% for r in rows %}{% if r.student not in studentNames %}{% set studentNames = studentNames|merge([r.student]) %}{% endif %}{% endfor %}
+  {% set students = studentNames|length %}
+  {% set critical = rows|filter(r => (r.attempt ?? 0) >= 3)|length %}
+  {% set pctRepeats = total ? (repeats * 100 / total)|round : 0 %}
+  {% set pctPendings = total ? 100 - pctRepeats : 0 %}
+  {% set ranked = rows|sort((a, b) => (b.attempt ?? 0) <=> (a.attempt ?? 0)) %}
+
+  <div class="vd-kpis vd-kpis--4">
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.users(24), tone: 'terracotta',
+      label: 'Estudiantes con alertas', value: students,
+      caption: total ~ ' registros en total'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.refresh(24), tone: 'danger',
+      label: 'Repitencias activas', value: repeats,
+      caption: pctRepeats ~ ' % de las alertas'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.clock(24), tone: 'warning',
+      label: 'Cursos pendientes', value: pendings,
+      caption: pctPendings ~ ' % de las alertas'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.alert(24), tone: 'info',
+      label: 'Alertas urgentes', value: critical,
+      caption: '3 o más intentos'
+    } %}
+  </div>
+
+  <div class="vd-alert-layout">
+    <section>
+      <div class="table-wrap">
+        <table class="data">
+          <thead>
+            <tr>
+              <th scope="col">Estudiante</th>
+              <th scope="col">Curso</th>
+              <th scope="col">Período</th>
+              <th scope="col">Intento</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Prioridad</th>
+              <th scope="col">Seguimiento</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              {% set att = row.attempt ?? 0 %}
+              <tr>
+                <td>
+                  <div class="vd-cell-student">
+                    {{ ic.user(18) }}
+                    <strong>{{ row.student }}</strong>
+                  </div>
+                </td>
+                <td>{{ row.course }}</td>
+                <td>{{ row.period }}</td>
+                <td>{{ att }}</td>
+                <td>{% include 'components/_status_badge.html.twig' with {status: row.status} %}</td>
+                <td>
+                  {% if row.alertType == 'REPITENCIA' %}
+                    <span class="chip" style="background:var(--danger-bg);border-color:transparent;color:#7C332C">{{ ic.refresh(14) }} Repitencia</span>
+                  {% else %}
+                    <span class="chip" style="background:var(--warning-bg);border-color:transparent;color:#7A5A17">{{ ic.clock(14) }} Pendiente</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if att >= 3 %}{% include 'components/_status_badge.html.twig' with {status: 'RETIRADO', label: 'URGENTE'} %}
+                  {% elseif att == 2 %}{% include 'components/_status_badge.html.twig' with {status: 'PENDIENTE', label: 'EN RIESGO'} %}
+                  {% else %}{% include 'components/_status_badge.html.twig' with {status: 'SIN_REGISTRO', label: 'SEGUIMIENTO'} %}{% endif %}
+                </td>
+                <td>{{ row.note ?? '—' }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="8">{% include 'components/_empty_state.html.twig' with {title: 'Sin resultados', message: 'No se encontraron cursos pendientes para este estudiante.'} %}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class="vd-legend">
+          <strong>Leyenda:</strong>
+          <span><span class="dot dot--bad"></span> URGENTE: 3 o más intentos</span>
+          <span><span class="dot dot--warn"></span> EN RIESGO: 2 intentos</span>
+          <span><span class="dot" style="background:var(--neutral)"></span> SEGUIMIENTO: 1 intento</span>
+          <span>La prioridad ayuda a identificar qué casos requieren seguimiento primero.</span>
+        </div>
+      </div>
+    </section>
+
+    <aside>
+      <section class="vd-panel">
+        <h2 class="vd-panel__head">{{ ic.pie(20) }} Distribución de alertas</h2>
+        <div class="vd-donut-wrap">
+          <div class="donut" style="background: conic-gradient(var(--danger) 0 {{ pctRepeats }}%, var(--warning) {{ pctRepeats }}% 100%)">
+            <div class="donut__hole">
+              <strong>{{ total }}</strong>
+              <span>alertas</span>
+            </div>
+          </div>
+          <div class="vd-donut-legend">
+            <span class="row"><span class="dot dot--bad"></span> Repitencias <b>{{ repeats }}</b></span>
+            <span class="row"><span class="dot dot--warn"></span> Pendientes <b>{{ pendings }}</b></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="vd-panel">
+        <h2 class="vd-panel__head">{{ ic.alert(20) }} Casos prioritarios</h2>
+        {% for row in ranked|slice(0, 5) %}
+          {% set att = row.attempt ?? 0 %}
+          <div class="vd-case">
+            <span class="vd-avatar-initials">{{ row.student|split(' ')|map(p => p[:1])|slice(0, 2)|join('') }}</span>
+            <div class="vd-case__body">
+              <strong>{{ row.student }}</strong>
+              <small>{{ row.course }} · {{ row.period }}</small>
+            </div>
+            <div class="vd-case__meta">
+              {% if att >= 3 %}{% include 'components/_status_badge.html.twig' with {status: 'RETIRADO', label: att ~ ' intentos'} %}
+              {% elseif att == 2 %}{% include 'components/_status_badge.html.twig' with {status: 'PENDIENTE', label: '2 intentos'} %}
+              {% else %}<span class="chip">{{ att }} intento</span>{% endif %}
+            </div>
+          </div>
+        {% else %}
+          <p class="help" style="color:var(--ink-muted);margin:0">Sin casos que mostrar.</p>
+        {% endfor %}
+      </section>
+    </aside>
+  </div>
+{% endif %}
+{% endblock %}

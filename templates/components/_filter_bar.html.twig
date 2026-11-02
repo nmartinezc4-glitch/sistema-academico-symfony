@@ -1,0 +1,17 @@
+<form class="filter-bar" method="get" aria-label="Filtros">
+  {% for f in fields %}
+    <div class="field">
+      <label for="f-{{ f.name }}">{{ f.label }}</label>
+      {% if f.type == 'select' %}
+        <select id="f-{{ f.name }}" name="{{ f.name }}">
+          <option value="">Todos</option>
+          {% for v, l in f.options %}<option value="{{ v }}" {% if f.value|default('') == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+        </select>
+      {% else %}
+        <input id="f-{{ f.name }}" type="{{ f.type|default('text') }}" name="{{ f.name }}" value="{{ f.value|default('') }}" placeholder="{{ f.placeholder|default('') }}">
+      {% endif %}
+    </div>
+  {% endfor %}
+  <button class="btn btn--primary" type="submit">Aplicar</button>
+  <a class="btn btn--ghost" href="{{ clearRoute }}">Limpiar</a>
+</form>

@@ -1,0 +1,388 @@
+[
+  {
+    "id": "S01",
+    "name": "Dashboard",
+    "mockup": "01_dashboard.png",
+    "route": "app_dashboard",
+    "goal": "Estado académico actual en menos de 10 segundos.",
+    "regions": [
+      "hero",
+      "metricCards",
+      "gradingProgress",
+      "academicAttention",
+      "careerDistribution",
+      "careerProgress",
+      "academicPeriods",
+      "quickActions"
+    ],
+    "data": [
+      "currentPeriod",
+      "activeStudents",
+      "gradedPercentage",
+      "approvalOnGraded",
+      "pendingGrades",
+      "alerts",
+      "careerBreakdown",
+      "careerProgress",
+      "periods"
+    ],
+    "actions": [
+      "student_new",
+      "grade_entry",
+      "reports",
+      "curriculum"
+    ],
+    "gaps": []
+  },
+  {
+    "id": "S02",
+    "name": "Alumnos",
+    "mockup": "02_alumnos_listado.png",
+    "route": "app_student_index",
+    "goal": "Buscar, filtrar y abrir estudiantes.",
+    "regions": [
+      "pageHeader",
+      "metrics",
+      "viewToggle",
+      "studentTable",
+      "filters",
+      "pagination"
+    ],
+    "filters": [
+      "q",
+      "career",
+      "curriculum",
+      "status",
+      "entryYear",
+      "progressRange"
+    ],
+    "columns": [
+      "student",
+      "code",
+      "career",
+      "curriculum",
+      "status",
+      "progress",
+      "actions"
+    ],
+    "actions": [
+      "student_show",
+      "student_new",
+      "transcript"
+    ],
+    "gaps": []
+  },
+  {
+    "id": "S03",
+    "name": "Perfil de estudiante",
+    "mockup": "03_perfil_estudiante.png",
+    "route": "app_student_show",
+    "goal": "Vista 360 del estudiante y contexto académico actual.",
+    "regions": [
+      "studentHero",
+      "currentPeriodCard",
+      "tabs",
+      "progressSummary",
+      "academicTrajectory",
+      "latestGrades",
+      "alerts",
+      "quickActions"
+    ],
+    "actions": [
+      "grade_entry",
+      "transcript",
+      "progress_student"
+    ],
+    "gaps": [
+      "G01",
+      "G02",
+      "G08",
+      "G10"
+    ]
+  },
+  {
+    "id": "S04",
+    "name": "Nuevo estudiante",
+    "mockup": "04_nuevo_estudiante.png",
+    "route": "app_student_new",
+    "goal": "Alta guiada de estudiante y programa.",
+    "regions": [
+      "stepper",
+      "personalDataForm",
+      "programForm",
+      "previewPanel",
+      "navigationActions"
+    ],
+    "fields": [
+      "studentCode",
+      "firstNames",
+      "lastNames",
+      "birthDate",
+      "photo",
+      "studentActive",
+      "careerFilter",
+      "curriculumId",
+      "programStartDate",
+      "programStatus"
+    ],
+    "uiOnlyFields": [
+      "email",
+      "phone",
+      "gender",
+      "nationality",
+      "documentId"
+    ],
+    "gaps": [
+      "G01",
+      "G02",
+      "G03",
+      "G04",
+      "G05"
+    ]
+  },
+  {
+    "id": "S05",
+    "name": "Pensum",
+    "mockup": "05_pensum_builder.png",
+    "route": "app_curriculum_show",
+    "goal": "Visualizar/organizar cursos por ciclo.",
+    "regions": [
+      "curriculumHeader",
+      "tabs",
+      "cycleColumns",
+      "courseCards",
+      "detailsSidebar",
+      "distribution",
+      "quickActions"
+    ],
+    "fields": [
+      "curriculumCode",
+      "name",
+      "version",
+      "validFrom",
+      "validTo",
+      "active",
+      "cycle",
+      "courseCode",
+      "courseName",
+      "required",
+      "order"
+    ],
+    "gaps": [
+      "G06",
+      "G07",
+      "G18"
+    ]
+  },
+  {
+    "id": "S06",
+    "name": "Ingreso de notas",
+    "mockup": "06_ingreso_notas.png",
+    "route": "app_grade_entry",
+    "goal": "Capturar notas solo donde backend lo permite.",
+    "regions": [
+      "search",
+      "studentContext",
+      "termContext",
+      "tabs",
+      "currentCycleRows",
+      "previousPendingRows",
+      "rules",
+      "saveActions"
+    ],
+    "sourceFuture": "SIS_ACA_VW_INGRESO_NOTAS",
+    "statuses": [
+      "PENDIENTE",
+      "APROBADO",
+      "REPROBADO",
+      "SIN_OFERTA",
+      "YA_APROBADO"
+    ],
+    "blockReasons": [
+      "PERIODO_NO_ABIERTO",
+      "ESTUDIANTE_NO_INSCRITO",
+      "SIN_OFERTA",
+      "OFERTA_INACTIVA",
+      "YA_APROBADO"
+    ],
+    "gaps": []
+  },
+  {
+    "id": "S07",
+    "name": "Expediente académico",
+    "mockup": "07_expediente_academico.png",
+    "route": "app_transcript_show",
+    "goal": "Historial individual documental.",
+    "regions": [
+      "studentHeader",
+      "tabs",
+      "periodHistory",
+      "progressSidebar",
+      "academicSituation",
+      "curriculumCard",
+      "quickActions"
+    ],
+    "columns": [
+      "courseCode",
+      "courseName",
+      "requiredType",
+      "section",
+      "grade",
+      "status",
+      "attempt",
+      "observations"
+    ],
+    "gaps": [
+      "G10",
+      "G08",
+      "G09"
+    ]
+  },
+  {
+    "id": "S08",
+    "name": "Centro de reportes",
+    "mockup": "08_centro_reportes.png",
+    "route": "app_report_index",
+    "goal": "Punto de entrada a análisis.",
+    "regions": [
+      "heroMetrics",
+      "quickFilters",
+      "reportCatalog",
+      "reportTabs"
+    ],
+    "gaps": [
+      "G12"
+    ]
+  },
+  {
+    "id": "S09",
+    "name": "Alumnos por carrera",
+    "mockup": "09_reporte_alumnos_carrera.png",
+    "route": "app_report_students_career",
+    "filters": [
+      "period",
+      "career",
+      "status",
+      "q"
+    ],
+    "gaps": []
+  },
+  {
+    "id": "S10",
+    "name": "Notas por carrera",
+    "mockup": "10_reporte_notas_carrera.png",
+    "route": "app_report_grades_career",
+    "filters": [
+      "period",
+      "career",
+      "section",
+      "resultStatus"
+    ],
+    "gaps": []
+  },
+  {
+    "id": "S11",
+    "name": "Notas por curso",
+    "mockup": "11_reporte_notas_curso.png",
+    "route": "app_report_grades_course",
+    "filters": [
+      "course",
+      "period",
+      "career",
+      "section",
+      "curriculum"
+    ],
+    "gaps": []
+  },
+  {
+    "id": "S12",
+    "name": "Notas por sección",
+    "mockup": "12_reporte_notas_seccion.png",
+    "route": "app_report_grades_section",
+    "filters": [
+      "period",
+      "career",
+      "course",
+      "section"
+    ],
+    "gaps": []
+  },
+  {
+    "id": "S13",
+    "name": "Avance por estudiante",
+    "mockup": "13_reporte_avance_estudiante.png",
+    "route": "app_report_progress_student",
+    "filters": [
+      "q",
+      "career",
+      "curriculum"
+    ],
+    "gaps": [
+      "G06"
+    ]
+  },
+  {
+    "id": "S14",
+    "name": "Avance por ciclo",
+    "mockup": "14_reporte_avance_ciclo.png",
+    "route": "app_report_progress_cycle",
+    "filters": [
+      "career",
+      "curriculum",
+      "year",
+      "cycle"
+    ],
+    "gaps": []
+  },
+  {
+    "id": "S15",
+    "name": "Pendientes y repitencias",
+    "mockup": "15_reporte_pendientes_repitencias.png",
+    "route": "app_report_pending_repeats",
+    "filters": [
+      "period",
+      "career",
+      "curriculum",
+      "status",
+      "alertType"
+    ],
+    "gaps": [
+      "G11"
+    ]
+  },
+  {
+    "id": "S16",
+    "name": "Login",
+    "mockup": "16_login.png",
+    "route": "app_login",
+    "goal": "Acceso visual; seguridad real futura.",
+    "gaps": [
+      "G13",
+      "G14",
+      "G16"
+    ]
+  },
+  {
+    "id": "S17",
+    "name": "Exportación XLSX",
+    "mockup": "17_exportacion_xlsx.png",
+    "route": "app_export_xlsx_preview",
+    "gaps": []
+  },
+  {
+    "id": "S18",
+    "name": "Vista previa PDF",
+    "mockup": "18_vista_previa_pdf.png",
+    "route": "app_export_pdf_preview",
+    "gaps": [
+      "G15"
+    ]
+  },
+  {
+    "id": "S19",
+    "name": "Vista de impresión",
+    "mockup": "19_vista_impresion.png",
+    "route": "app_print_preview",
+    "gaps": []
+  }
+]

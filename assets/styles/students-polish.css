@@ -1,0 +1,23 @@
+/* Ajustes visuales específicos del listado de alumnos. */
+
+/* Los seeds declaran rutas de foto que no traen binario. Solo esas rutas
+   muestran avatar neutro; las fotos reales /uploads/students sí se renderizan. */
+.va-page--students .va-avatar--row:has(> img[src^="students/"]) {
+  position: relative;
+  color: var(--burgundy);
+}
+.va-page--students .va-avatar--row:has(> img[src^="students/"]) > img { display: none; }
+.va-page--students .va-avatar--row:has(> img[src^="students/"])::before,
+.va-page--students .va-avatar--row:has(> img[src^="students/"])::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background: currentColor;
+}
+.va-page--students .va-avatar--row:has(> img[src^="students/"])::before {
+  top: 7px; width: 8px; height: 8px; border-radius: 50%;
+}
+.va-page--students .va-avatar--row:has(> img[src^="students/"])::after {
+  bottom: 7px; width: 17px; height: 9px; border-radius: 9px 9px 5px 5px;
+}

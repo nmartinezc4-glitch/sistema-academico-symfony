@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vista previa · {{ title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper:#fff; --canvas:#eee8de; --ink:#342d29; --muted:#6f655f;
+      --line:#ded5c9; --accent:#793b46; --terracotta:#c86f50;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Inter,system-ui,sans-serif; color:var(--ink); background:var(--canvas); }
+    .toolbar {
+      position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; gap:16px;
+      padding:14px 24px; background:#fbf8f2; border-bottom:1px solid var(--line); box-shadow:0 4px 18px rgba(52,45,41,.08);
+    }
+    .toolbar__meta strong { display:block; }
+    .toolbar__meta small { color:var(--muted); }
+    .toolbar__actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn { display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:9px; border:1px solid var(--line); background:#fff; color:var(--ink); text-decoration:none; font-weight:700; cursor:pointer; }
+    .btn--primary { background:var(--terracotta); color:#fff; border-color:var(--terracotta); }
+    .preview-note {
+      max-width:1200px; margin:18px auto 0; padding:12px 16px; border:1px solid #d8c99f; border-radius:10px; background:#fff7dc; color:#6f5520;
+    }
+    .paper {
+      width:min(1200px, calc(100% - 40px)); min-height:210mm; margin:18px auto 36px; padding:18mm 14mm;
+      background:var(--paper); box-shadow:0 14px 40px rgba(52,45,41,.16);
+    }
+    .doc-header { display:grid; grid-template-columns:1fr auto; gap:24px; padding-bottom:14px; border-bottom:2px solid var(--accent); }
+    .brand { font-family:Fraunces,Georgia,serif; font-size:18px; color:var(--accent); letter-spacing:.04em; }
+    h1 { margin:8px 0 4px; font:700 28px/1.1 Fraunces,Georgia,serif; }
+    .doc-subtitle { color:var(--muted); margin:0; }
+    .doc-meta { text-align:right; font-size:11px; color:var(--muted); }
+    .filters { display:flex; gap:8px; flex-wrap:wrap; margin:16px 0; padding:12px; background:#fbf8f2; border:1px solid var(--line); border-radius:8px; }
+    .filter { padding:5px 8px; border:1px solid var(--line); border-radius:6px; background:#fff; font-size:11px; }
+    .summary { display:flex; justify-content:space-between; gap:16px; align-items:end; margin:18px 0 10px; }
+    .summary h2 { margin:0; font:700 18px Fraunces,Georgia,serif; }
+    .summary span { color:var(--muted); font-size:11px; }
+    table { border-collapse:collapse; width:100%; font-size:10px; }
+    th { background:#f6f1e8; color:#6f655f; text-transform:uppercase; letter-spacing:.04em; font-size:9px; }
+    th,td { border:1px solid var(--line); padding:6px 7px; text-align:left; vertical-align:top; }
+    thead { display:table-header-group; }
+    tr { break-inside:avoid; page-break-inside:avoid; }
+    .status { display:inline-block; padding:3px 6px; border-radius:999px; background:#eef3e9; font-size:9px; font-weight:700; }
+    .empty { padding:30px; text-align:center; color:var(--muted); border:1px dashed var(--line); }
+    .doc-footer { margin-top:18px; padding-top:10px; border-top:1px solid var(--line); display:flex; justify-content:space-between; color:var(--muted); font-size:9px; }
+    @page { size:A4 landscape; margin:12mm; }
+    @media print {
+      body { background:#fff; }
+      .toolbar,.preview-note { display:none !important; }
+      .paper { width:auto; min-height:0; margin:0; padding:0; box-shadow:none; }
+      a { color:inherit; text-decoration:none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <div class="toolbar__meta">
+      <strong>Vista previa del reporte</strong>
+      <small>Revisa el contenido antes de imprimirlo o guardarlo como PDF.</small>
+    </div>
+    <div class="toolbar__actions">
+      <a class="btn" href="{{ path(backRoute, query) }}">← Volver al reporte</a>
+      <button class="btn btn--primary" type="button" onclick="window.print()">Imprimir / Guardar como PDF</button>
+    </div>
+  </div>
+
+  <div class="preview-note">
+    Esta es la versión documental del reporte. Al pulsar <strong>Imprimir / Guardar como PDF</strong>, el navegador mostrará su vista de impresión y podrás elegir «Guardar como PDF» sin descargar un archivo automáticamente.
+  </div>
+
+  <main class="paper">
+    <header class="doc-header">
+      <div>
+        <div class="brand">SISTEMA ACADÉMICO</div>
+        <h1>{{ title }}</h1>
+        <p class="doc-subtitle">Reporte académico · {{ rows|length }} {{ rows|length == 1 ? 'registro' : 'registros' }}</p>
+      </div>
+      <div class="doc-meta">
+        <strong>Documento de consulta</strong><br>
+        Generado: {{ generatedAt|date('d/m/Y H:i') }}<br>
+        {% if app.user %}Por: {{ app.user.displayName }} · {{ app.user.primaryRoleLabel }}{% endif %}
+      </div>
+    </header>
+
+    {% if context is not empty %}
+      <section class="filters" aria-label="Filtros aplicados">
+        {% for label,value in context %}
+          <span class="filter"><strong>{{ label }}:</strong> {{ value }}</span>
+        {% endfor %}
+      </section>
+    {% else %}
+      <section class="filters"><span class="filter"><strong>Alcance:</strong> Todos los registros autorizados</span></section>
+    {% endif %}
+
+    <div class="summary">
+      <h2>Detalle del reporte</h2>
+      <span>{{ rows|length }} registros · los filtros de la consulta se conservan en esta vista</span>
+    </div>
+
+    {% if rows is empty %}
+      <div class="empty">No hay información para los filtros seleccionados.</div>
+    {% else %}
+      <table>
+        <thead><tr>{% for col in columns %}<th>{{ col.label }}</th>{% endfor %}</tr></thead>
+        <tbody>
+        {% for row in rows %}
+          <tr>
+          {% for col in columns %}
+            {% set value = attribute(row, col.key)|default(null) %}
+            <td>
+              {% if value is null or value == '' %}
+                —
+              {% elseif col.key in ['status','cycleStatus','alertType'] %}
+                <span class="status">{{ value|replace({'_':' '})|lower|title }}</span>
+              {% elseif col.key == 'progress' %}
+                {{ value }} %
+              {% else %}
+                {{ value }}
+              {% endif %}
+            </td>
+          {% endfor %}
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+
+    <footer class="doc-footer">
+      <span>Sistema Académico · Documento generado desde Symfony</span>
+      <span>Vista previa para impresión / PDF</span>
+    </footer>
+  </main>
+</body>
+</html>

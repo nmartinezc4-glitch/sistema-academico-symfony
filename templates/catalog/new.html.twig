@@ -1,0 +1,106 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set f = form|default({}) %}
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: config.title|replace({'Nueva ': '', 'Nuevo ': ''}) ~ 's'},
+  {label: config.title}
+] %}
+
+{% block title %}{{ config.title }} · Sistema Académico{% endblock %}
+
+{% block body %}
+<div class="va-page ac-new">
+  <header class="page-header page-header--hero ac-new__hero">
+    <div class="page-header__main">
+      <p class="eyebrow">{{ config.eyebrow }}</p>
+      <h1>{{ config.title }}</h1>
+      <p class="subtitle">Crea un registro maestro que podrá reutilizarse en los procesos académicos relacionados.</p>
+      <blockquote class="page-header__quote">“La consistencia comienza en los catálogos.”</blockquote>
+    </div>
+    <div class="page-header__action">
+      <a class="btn btn--secondary" href="{{ path(config.indexRoute) }}">
+        {{ ic.glyph('arrowLeft', 16) }}<span>Volver</span>
+      </a>
+    </div>
+  </header>
+
+  <div class="ac-new__layout">
+    <form method="post" class="card ac-new__form" novalidate>
+      <input type="hidden" name="_token" value="{{ csrf_token(config.entityLabel == 'carrera' ? 'app_career_new' : (config.entityLabel == 'curso' ? 'app_course_new' : 'app_section_new')) }}">
+      {% if errors|length %}
+        <div class="notice notice--danger" role="alert">
+          <strong>Revisa la información:</strong>
+          <ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        </div>
+      {% endif %}
+
+      <div class="ac-new__section">
+        <span class="ac-new__number">01</span>
+        <div>
+          <h2>Datos de {{ config.article }} {{ config.entityLabel }}</h2>
+          <p>El identificador institucional se genera automáticamente para evitar duplicados y errores de digitación.</p>
+        </div>
+      </div>
+
+      <div class="ac-new__grid">
+        <div class="field">
+          <label>Código institucional</label>
+          <div class="ac-new__autocode" aria-label="Código generado automáticamente">
+            <strong>{{ config.codePattern }}</strong>
+            <span>{{ config.codeHelp }}</span>
+          </div>
+        </div>
+
+        {% if config.codeInput in ['career', 'course'] %}
+          <div class="field">
+            <label for="codeHint">{{ config.codeInput == 'career' ? 'Sigla preferida' : 'Sigla del curso' }}</label>
+            <input id="codeHint" name="codeHint" value="{{ f.codeHint|default('') }}" maxlength="{{ config.codeInput == 'career' ? 20 : 8 }}" placeholder="{{ config.codeInput == 'career' ? 'Ej. BCL-COMP' : 'Ej. MAT' }}">
+            <div class="help">Opcional. Si lo dejas vacío, el sistema propondrá una sigla a partir del nombre.</div>
+          </div>
+        {% endif %}
+
+        {% if config.codeInput != 'section' %}
+          <div class="field">
+            <label for="name">Nombre *</label>
+            <input id="name" name="name" value="{{ f.name|default('') }}" maxlength="{{ config.nameMax }}" required>
+          </div>
+        {% else %}
+          <div class="field">
+            <label>Nombre de la sección</label>
+            <div class="ac-new__autocode"><strong>Sección + código</strong><span>Ej.: si la siguiente es D, se guardará como “Sección D”.</span></div>
+          </div>
+        {% endif %}
+
+        {% if config.description %}
+          <div class="field ac-new__wide">
+            <label for="description">Descripción</label>
+            <textarea id="description" name="description" rows="4" placeholder="Descripción opcional del registro">{{ f.description|default('') }}</textarea>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="ac-new__actions">
+        <a class="btn btn--secondary" href="{{ path(config.indexRoute) }}">Cancelar</a>
+        <button class="btn btn--primary" type="submit">
+          {{ ic.glyph('check', 16) }}<span>Crear {{ config.entityLabel }}</span>
+        </button>
+      </div>
+    </form>
+
+    <aside class="card ac-new__context">
+      <span class="ac-new__context-icon">{{ ic.glyph(config.entityLabel == 'curso' ? 'book' : (config.entityLabel == 'sección' ? 'users' : 'cap'), 20) }}</span>
+      <div>
+        <h2>Uso dentro del sistema</h2>
+        {% if config.entityLabel == 'carrera' %}
+          <p>La carrera organiza versiones de pensum. El estudiante queda asociado a la carrera mediante el pensum que se le asigna.</p>
+        {% elseif config.entityLabel == 'curso' %}
+          <p>El curso pertenece al catálogo maestro. Después se agrega a uno o varios pensums indicando ciclo, tipo y orden.</p>
+        {% else %}
+          <p>La sección se usa en la inscripción del estudiante y en las ofertas de curso. Ambas deben coincidir para registrar notas.</p>
+        {% endif %}
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

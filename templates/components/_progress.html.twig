@@ -1,0 +1,10 @@
+{% set renderValue = showValue is defined ? showValue : true %}
+{% if label is defined or renderValue %}
+<div class="progress-label">
+  {% if label is defined %}<span>{{ label }}</span>{% endif %}
+  {% if renderValue %}<span>{{ value }}%</span>{% endif %}
+</div>
+{% endif %}
+<div class="progress" role="progressbar" aria-valuenow="{{ value }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ label|default('Progreso') }}">
+  <span class="progress__bar" style="width: {{ value > 100 ? 100 : (value < 0 ? 0 : value) }}%"></span>
+</div>

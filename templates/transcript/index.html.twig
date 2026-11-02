@@ -1,0 +1,265 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: 'Expedientes'}
+] %}
+
+{% block title %}Expedientes académicos · Sistema Académico{% endblock %}
+
+{% block body %}
+{% set hasFilters = q or career or curriculum or status or entryYear or historyFilter != 'all' %}
+
+<div class="va-page tx-directory">
+
+  {% include 'components/_page_header.html.twig' with {
+    hero: true,
+    title: 'Expedientes académicos',
+    subtitle: 'Localiza un estudiante y abre su historial académico completo.',
+    quote: '“Un expediente útil comienza por encontrar la historia correcta.”'
+  } %}
+
+  <div class="grid-metrics tx-directory__metrics">
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.glyph('file', 23),
+      tone: 'terracotta',
+      label: 'Expedientes',
+      value: metrics.total,
+      caption: 'estudiantes registrados'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.glyph('book', 23),
+      tone: 'success',
+      label: 'Con historial',
+      value: metrics.withHistory,
+      caption: 'con al menos una inscripción'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.glyph('clock', 23),
+      tone: 'warning',
+      label: 'Sin historial',
+      value: metrics.withoutHistory,
+      caption: 'aún sin período académico'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.glyph('check', 23),
+      tone: 'success',
+      label: 'Resultados',
+      value: metrics.results,
+      caption: 'calificaciones registradas'
+    } %}
+  </div>
+
+  <section class="card tx-directory__filters" aria-labelledby="transcript-filter-title">
+    <div class="tx-directory__filters-head">
+      <div>
+        <h2 id="transcript-filter-title">{{ ic.glyph('search', 18) }}<span>Buscar expediente</span></h2>
+        <p>{{ filteredTotal }} resultado{{ filteredTotal == 1 ? '' : 's' }} en la selección actual.</p>
+      </div>
+      {% if hasFilters %}
+        <a class="va-link" href="{{ path('app_transcript_index', {per_page: pager.perPage}) }}">Limpiar filtros</a>
+      {% endif %}
+    </div>
+
+    <form
+      method="get"
+      class="tx-directory__filter-grid"
+      data-controller="dependent-select"
+      data-dependent-select-curricula-value="{{ curricula|json_encode|e('html_attr') }}"
+      data-dependent-select-empty-label-value="Todos los pensums"
+    >
+      <div class="field tx-directory__search">
+        <label for="q">Nombre o carné</label>
+        <div class="icon-input">
+          {{ ic.glyph('search', 16) }}
+          <input id="q" name="q" value="{{ q }}" placeholder="Ej. Ana López o STU-2025-0001" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="career">Carrera</label>
+        <select id="career" name="career" data-dependent-select-target="career" data-action="change->dependent-select#refresh">
+          <option value="">Todas las carreras</option>
+          {% for c in careers %}
+            <option value="{{ c.id }}" {% if career == c.id ~ '' %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="curriculum">Pensum</label>
+        <select id="curriculum" name="curriculum" data-dependent-select-target="curriculum">
+          <option value="">Todos los pensums</option>
+          {% for p in curricula %}
+            <option value="{{ p.id }}" {% if curriculum == p.id ~ '' %}selected{% endif %}>{{ p.code }} · {{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="status">Estado del programa</label>
+        <select id="status" name="status">
+          <option value="">Todos los estados</option>
+          {% for item in statuses %}
+            <option value="{{ item }}" {% if status == item %}selected{% endif %}>{{ status_label(item) }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="entry_year">Año de ingreso</label>
+        <select id="entry_year" name="entry_year">
+          <option value="">Todos los años</option>
+          {% for year in entryYears %}
+            <option value="{{ year }}" {% if entryYear == year %}selected{% endif %}>{{ year }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="history">Historial académico</label>
+        <select id="history" name="history">
+          <option value="all" {% if historyFilter == 'all' %}selected{% endif %}>Todos</option>
+          <option value="with" {% if historyFilter == 'with' %}selected{% endif %}>Con historial</option>
+          <option value="without" {% if historyFilter == 'without' %}selected{% endif %}>Sin historial</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="orden">Ordenar por</label>
+        <select id="orden" name="orden">
+          <option value="apellidos-asc" {% if order == 'apellidos-asc' %}selected{% endif %}>Apellidos (A–Z)</option>
+          <option value="codigo-asc" {% if order == 'codigo-asc' %}selected{% endif %}>Carné</option>
+          <option value="historial-desc" {% if order == 'historial-desc' %}selected{% endif %}>Mayor historial</option>
+          <option value="avance-desc" {% if order == 'avance-desc' %}selected{% endif %}>Mayor avance</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="per_page">Por página</label>
+        <select id="per_page" name="per_page">
+          {% for pp in constant('App\\Ui\\Paginator::ALLOWED_PER_PAGE') %}
+            <option value="{{ pp }}" {% if pager.perPage == pp %}selected{% endif %}>{{ pp }} expedientes</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="tx-directory__filter-actions">
+        <a class="btn btn--ghost" href="{{ path('app_transcript_index', {per_page: pager.perPage}) }}">Limpiar</a>
+        <button class="btn btn--primary" type="submit">{{ ic.glyph('filter', 15) }}<span>Aplicar filtros</span></button>
+      </div>
+    </form>
+  </section>
+
+  <section class="tx-directory__results" aria-labelledby="transcript-results-title">
+    <div class="tx-directory__results-head">
+      <div>
+        <h2 id="transcript-results-title">Directorio de expedientes</h2>
+        <p>{{ filteredTotal }} de {{ total }} estudiantes.</p>
+      </div>
+    </div>
+
+    <div class="table-wrap tx-directory__table">
+      <table class="data">
+        <thead>
+          <tr>
+            <th scope="col">Estudiante</th>
+            <th scope="col">Carrera / pensum</th>
+            <th scope="col">Último período</th>
+            <th scope="col">Historial</th>
+            <th scope="col">Avance</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in items %}
+            <tr>
+              <td>
+                <div class="tx-directory__student">
+                  <span class="avatar tx-directory__avatar">
+                    {% if student.photoPath and student.photoPath starts with '/uploads/students/' %}
+                      <img src="{{ student.photoPath }}" alt="">
+                    {% else %}
+                      <span aria-hidden="true">{{ student.firstNames|slice(0,1) ~ student.lastNames|slice(0,1) }}</span>
+                    {% endif %}
+                  </span>
+                  <span>
+                    <a href="{{ path('app_transcript_show', {id: student.id}) }}"><strong>{{ student.fullName }}</strong></a>
+                    <small>{{ student.code }}{% if student.entryYear %} · ingreso {{ student.entryYear }}{% endif %}</small>
+                  </span>
+                </div>
+              </td>
+
+              <td>
+                <strong class="tx-directory__career">{{ student.career|default('Sin carrera') }}</strong>
+                <small>{{ student.curriculum|default('Sin pensum') }}</small>
+              </td>
+
+              <td>
+                {% if student.lastPeriod %}
+                  <strong>{{ student.lastPeriod }}</strong>
+                  <small>{{ student.lastCycle }}{% if student.lastSection %} · Sección {{ student.lastSection }}{% endif %}</small>
+                {% else %}
+                  <span class="tx-directory__empty-label">Sin inscripción</span>
+                {% endif %}
+              </td>
+
+              <td>
+                <div class="tx-directory__history-count">
+                  <strong>{{ student.periodsCount }}</strong>
+                  <span>período{{ student.periodsCount == 1 ? '' : 's' }}</span>
+                  <small>{{ student.resultsCount }} resultado{{ student.resultsCount == 1 ? '' : 's' }}</small>
+                </div>
+              </td>
+
+              <td>
+                <div class="tx-directory__progress">
+                  {% include 'components/_progress.html.twig' with {value: student.progress|round, showValue: false} %}
+                  <strong>{{ student.progress|round }}%</strong>
+                </div>
+              </td>
+
+              <td>
+                {% include 'components/_status_badge.html.twig' with {status: student.status} %}
+              </td>
+
+              <td>
+                <div class="tx-directory__actions">
+                  <a class="btn btn--secondary" href="{{ path('app_transcript_show', {id: student.id}) }}">
+                    {{ ic.glyph('file', 15) }}<span>Abrir</span>
+                  </a>
+                  <a class="tx-directory__icon-action" href="{{ path('app_student_show', {id: student.id}) }}" title="Ver perfil" aria-label="Ver perfil de {{ student.fullName }}">
+                    {{ ic.glyph('user', 16) }}
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="7">
+                {% include 'components/_empty_state.html.twig' with {
+                  title: 'No encontramos expedientes',
+                  message: 'Prueba con otro nombre, carné o combinación de filtros.'
+                } %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% include 'components/_pagination.html.twig' with {
+      page: pager.page,
+      pages: pager.pages,
+      total: filteredTotal,
+      range: pager.range,
+      perPage: pager.perPage,
+      label: 'expedientes',
+      showPerPage: false
+    } %}
+  </section>
+
+</div>
+{% endblock %}

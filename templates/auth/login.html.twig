@@ -1,0 +1,56 @@
+{% extends 'layout/auth.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% block body %}
+<div class="login">
+  <section class="login__visual">
+    <div class="login__brand va-login-brand">
+      <svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="var(--burgundy)" stroke-width="1.4" aria-hidden="true"><path d="M12 5c-2-1.5-5-2-8-2v15c3 0 6 .5 8 2 2-1.5 5-2 8-2V3c-3 0-6 .5-8 2z"/><path d="M12 5v15"/></svg>
+      <strong>SISTEMA<br>ACADÉMICO</strong>
+    </div>
+    <hr class="va-login-rule">
+    <h1 class="va-login-title">Bienvenido al<br><span class="va-login-accent">Sistema Académico</span></h1>
+    <p class="login__lead">Un espacio para construir conocimiento, impulsar tu desarrollo y ser parte de una comunidad que transforma.</p>
+    <blockquote class="login__quote">“Los datos también construyen historias de oportunidades.”</blockquote>
+    <div class="login__motto">LA EDUCACIÓN<br>CONSTRUYE<br>HISTORIAS</div>
+  </section>
+
+  <section class="login__panel">
+    <form method="post" class="login__card" novalidate>
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+      <h2 class="va-login-heading">Iniciar sesión</h2>
+      <p class="va-login-sub">Ingresa con tu cuenta institucional para acceder al Sistema Académico.</p>
+      {% if error %}<div class="notice notice--danger" role="alert">{{ error }}</div>{% endif %}
+      <div class="field">
+        <label for="_username">Correo institucional</label>
+        <div class="icon-input">{{ ic.glyph('mail', 16) }}<input id="_username" name="_username" type="email" value="{{ lastUsername|default('') }}" autocomplete="username" placeholder="tu.nombre@universidad.edu" required></div>
+      </div>
+      <div class="field">
+        <label for="_password">Contraseña</label>
+        <div class="va-affix">
+          <span class="va-affix__start" aria-hidden="true">{{ ic.glyph('lock', 16) }}</span>
+          <input id="_password" name="_password" type="password" autocomplete="current-password" placeholder="Ingresa tu contraseña" required>
+          <span class="va-affix__end" aria-hidden="true">{{ ic.glyph('eye', 16) }}</span>
+        </div>
+      </div>
+      <div class="va-login-row">
+        <span class="va-login-forgot" title="Recuperación disponible en una versión posterior">¿Olvidaste tu contraseña?</span>
+      </div>
+      <button class="btn va-login-cta" type="submit">Iniciar sesión {{ ic.glyph('arrowRight', 18) }}</button>
+
+      <div class="notice notice--success va-login-secure">
+        <span class="va-login-secure__icon" aria-hidden="true">{{ ic.glyph('lock', 18) }}</span>
+        <div><strong>Acceso seguro.</strong> Tu información está protegida con protocolos de seguridad institucionales.</div>
+      </div>
+
+      <div class="va-login-foot">
+        <span class="va-login-foot__icon" aria-hidden="true">{{ ic.glyph('help', 18) }}</span>
+        <div>
+          <small class="va-login-foot__label">Soporte académico</small>
+          <strong class="va-login-foot__value">soporte@universidad.edu</strong>
+          <small class="va-login-foot__meta">Lun. a Vie. 8:00 – 18:00</small>
+        </div>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+[
+  {
+    "screenId": "S01",
+    "title": "Dashboard",
+    "file": "mockups/01_dashboard.png"
+  },
+  {
+    "screenId": "S02",
+    "title": "Listado de alumnos",
+    "file": "mockups/02_alumnos_listado.png"
+  },
+  {
+    "screenId": "S03",
+    "title": "Perfil de estudiante",
+    "file": "mockups/03_perfil_estudiante.png"
+  },
+  {
+    "screenId": "S04",
+    "title": "Nuevo estudiante",
+    "file": "mockups/04_nuevo_estudiante.png"
+  },
+  {
+    "screenId": "S05",
+    "title": "Pensum / constructor curricular",
+    "file": "mockups/05_pensum_builder.png"
+  },
+  {
+    "screenId": "S06",
+    "title": "Ingreso de notas",
+    "file": "mockups/06_ingreso_notas.png"
+  },
+  {
+    "screenId": "S07",
+    "title": "Expediente académico",
+    "file": "mockups/07_expediente_academico.png"
+  },
+  {
+    "screenId": "S08",
+    "title": "Centro de reportes",
+    "file": "mockups/08_centro_reportes.png"
+  },
+  {
+    "screenId": "S09",
+    "title": "Reporte alumnos por carrera",
+    "file": "mockups/09_reporte_alumnos_carrera.png"
+  },
+  {
+    "screenId": "S10",
+    "title": "Reporte notas por carrera",
+    "file": "mockups/10_reporte_notas_carrera.png"
+  },
+  {
+    "screenId": "S11",
+    "title": "Reporte notas por curso",
+    "file": "mockups/11_reporte_notas_curso.png"
+  },
+  {
+    "screenId": "S12",
+    "title": "Reporte notas por sección",
+    "file": "mockups/12_reporte_notas_seccion.png"
+  },
+  {
+    "screenId": "S13",
+    "title": "Reporte avance por estudiante",
+    "file": "mockups/13_reporte_avance_estudiante.png"
+  },
+  {
+    "screenId": "S14",
+    "title": "Reporte avance por ciclo",
+    "file": "mockups/14_reporte_avance_ciclo.png"
+  },
+  {
+    "screenId": "S15",
+    "title": "Reporte pendientes y repitencias",
+    "file": "mockups/15_reporte_pendientes_repitencias.png"
+  },
+  {
+    "screenId": "S16",
+    "title": "Login",
+    "file": "mockups/16_login.png"
+  },
+  {
+    "screenId": "S17",
+    "title": "Exportación XLSX",
+    "file": "mockups/17_exportacion_xlsx.png"
+  },
+  {
+    "screenId": "S18",
+    "title": "Vista previa PDF",
+    "file": "mockups/18_vista_previa_pdf.png"
+  },
+  {
+    "screenId": "S19",
+    "title": "Vista de impresión",
+    "file": "mockups/19_vista_impresion.png"
+  }
+]

@@ -1,0 +1,64 @@
+
+###> symfony/framework-bundle ###
+/.env.local
+/.env.local.php
+/.env.*.local
+/config/secrets/prod/prod.decrypt.private.php
+/public/bundles/
+/var/
+/vendor/
+###< symfony/framework-bundle ###
+
+###> symfony/asset-mapper ###
+/public/assets/
+/assets/vendor/
+###< symfony/asset-mapper ###
+.env.local
+.env.*.local
+/node_modules/
+*.deb
+.DS_Store
+
+
+# ============================================================
+# LOCAL / SECRETS
+# ============================================================
+/.env.local
+/.env.*.local
+
+# ============================================================
+# RUNTIME / DEPENDENCIES
+# ============================================================
+/node_modules/
+/vendor/
+/var/
+
+# ============================================================
+# LOCAL PACKAGES / OS
+# ============================================================
+*.deb
+.DS_Store
+**/__MACOSX/
+**/._*
+
+# ============================================================
+# LOCAL AGENT TOOLING
+# ============================================================
+/.agents/
+/.claude/
+/agent/
+/skills-lock.json
+
+# ============================================================
+# ACCIDENTAL LOCAL CONFIG
+# ============================================================
+/compose.yaml
+/compose.override.yaml
+/config/packages/doctrine.yaml.before-dbal-only
+/public/uploads/
+/public/uploads/
+/public/images/avatar-user.jpg
+/docs/frontend/screenshots/
+/00-Documentacion/UXUI_Master_Sistema_Academico/mockups/
+/00-Documentacion/visual/
+*.log

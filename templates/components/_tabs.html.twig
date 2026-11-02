@@ -1,0 +1,10 @@
+{% import 'components/_icons.html.twig' as ic %}
+<nav class="tabs" aria-label="{{ al|default('Secciones') }}">
+  {% for item in items %}
+    {% if item.url is defined %}
+      <a href="{{ item.url }}" {% if item.active|default(false) %}aria-current="page"{% endif %} {% if item.disabled|default(false) %}aria-disabled="true" tabindex="-1" {% endif %}>{% if item.icon is defined %}{{ ic.glyph(item.icon, item.size|default(18)) }}{% endif %}{{ item.label }}</a>
+    {% else %}
+      <button type="button" {% if item.active|default(false) %}aria-selected="true"{% endif %} {% if item.disabled|default(false) %}disabled{% endif %}>{% if item.icon is defined %}{{ ic.glyph(item.icon, item.size|default(18)) }}{% endif %}{{ item.label }}</button>
+    {% endif %}
+  {% endfor %}
+</nav>

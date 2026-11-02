@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Documento{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    @page { size: A4; margin: 16mm 14mm; }
+    body { font-family: var(--font-ui, Inter, system-ui); color: #342D29; background: #fff; margin: 0; font-size: 12px; }
+    h1,h2,h3 { font-family: Fraunces, Georgia, serif; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #DED5C9; padding: 6px 8px; text-align: left; }
+    thead { display: table-header-group; }
+    tr { page-break-inside: avoid; }
+    .print-header { border-bottom: 2px solid #793B46; padding-bottom: 8px; margin-bottom: 16px; }
+    .print-footer { margin-top: 24px; border-top: 1px solid #DED5C9; padding-top: 8px; font-size: 11px; color: #6F655F; display: flex; justify-content: space-between; }
+  </style>
+</head>
+<body>
+  <main>{% block body %}{% endblock %}</main>
+</body>
+</html>

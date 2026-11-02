@@ -1,0 +1,53 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set crumbs = [{label:'Inicio', route:path('app_dashboard')},{label:'Ofertas', route:path('app_offering_index')},{label:'Docentes y ofertas'}] %}
+{% block title %}Docentes y ofertas · Sistema Académico{% endblock %}
+{% block body %}
+<div class="va-page">
+  {% include 'components/_page_header.html.twig' with {
+    hero:true,
+    eyebrow:'Gestión académica',
+    title:'Docentes y ofertas',
+    subtitle:'Asigna a cada docente únicamente las ofertas que puede calificar.',
+    quote:'“El rol habilita la función; la asignación delimita su alcance.”'
+  } %}
+
+  <form method="post" class="card cal-form">
+    <input type="hidden" name="_token" value="{{ csrf_token('app_teaching_assignment_index') }}">
+    {% if errors|length %}<div class="notice notice--danger"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+    <div class="cal-form__grid">
+      <div class="field"><label for="userId">Docente</label><select id="userId" name="userId" required><option value="">Selecciona…</option>{% for t in teachers %}<option value="{{ t.id }}">{{ t.name }} · {{ t.email }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="offeringId">Oferta académica</label><select id="offeringId" name="offeringId" required><option value="">Selecciona…</option>{% for o in offerings %}<option value="{{ o.id }}">{{ o.period }} · {{ o.courseCode }} {{ o.course }} · Sección {{ o.section }} · {{ o.curriculum }}</option>{% endfor %}</select></div>
+    </div>
+    <div class="cal-form__actions"><button class="btn btn--primary" type="submit">{{ ic.glyph('check',16) }}<span>Asignar docente</span></button></div>
+  </form>
+
+  <section class="card vb-panel" style="margin-top:var(--space-5)">
+    <div class="vb-panel__head"><div><h2>Asignaciones</h2><p class="vb-panel__sub">Las asignaciones retiradas se conservan para trazabilidad.</p></div></div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Docente</th><th>Oferta</th><th>Período</th><th>Sección</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+        {% for a in assignments %}
+          <tr>
+            <td><strong>{{ a.teacher }}</strong><br><small>{{ a.email }}</small></td>
+            <td>{{ a.courseCode }} · {{ a.course }}</td>
+            <td>{{ a.period }}</td>
+            <td>{{ a.section }}</td>
+            <td>{% include 'components/_status_badge.html.twig' with {status:a.active ? 'ACTIVO' : 'INACTIVO'} %}</td>
+            <td>
+              {% if a.active %}
+                <form method="post" action="{{ path('app_teaching_assignment_remove',{userId:a.userId,offeringId:a.offeringId}) }}">
+                  <input type="hidden" name="_token" value="{{ csrf_token('app_teaching_assignment_remove') }}">
+                  <button class="btn btn--secondary" type="submit">Retirar</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}<tr><td colspan="6">Aún no hay docentes asignados a ofertas.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

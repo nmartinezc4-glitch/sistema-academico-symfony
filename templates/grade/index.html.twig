@@ -1,0 +1,199 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: 'Evaluación'},
+  {label: 'Ingreso de notas'}
+] %}
+
+{% block title %}Ingreso de notas · Sistema Académico{% endblock %}
+
+{% block body %}
+<div class="va-page ge-directory">
+
+  {% include 'components/_page_header.html.twig' with {
+    hero: true,
+    title: teacherMode|default(false) ? 'Mis estudiantes para calificar' : 'Ingreso de notas',
+    subtitle: teacherMode|default(false)
+      ? 'Los estudiantes aparecen automáticamente según las ofertas académicas que Coordinación te haya asignado.'
+      : 'Selecciona un estudiante con inscripción académica para consultar o registrar sus calificaciones.',
+    quote: '“Calificar bien también significa preservar el historial correcto.”'
+  } %}
+
+
+  {% if teacherMode|default(false) %}
+    <section class="card ge-directory__search" aria-labelledby="assigned-offers-title">
+      <div class="ge-directory__search-head">
+        <div>
+          <h2 id="assigned-offers-title">{{ ic.glyph('book', 18) }}<span>Mis ofertas académicas</span></h2>
+          <p>{{ assignedOfferings|length }} oferta{{ assignedOfferings|length == 1 ? '' : 's' }} asignada{{ assignedOfferings|length == 1 ? '' : 's' }} a tu usuario.</p>
+        </div>
+      </div>
+
+      {% if assignedOfferings|length %}
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>Período</th><th>Curso</th><th>Sección</th><th>Pensum</th><th>Estudiantes</th><th>Estado</th></tr></thead>
+            <tbody>
+            {% for offer in assignedOfferings %}
+              <tr>
+                <td><strong>{{ offer.period }}</strong></td>
+                <td><strong>{{ offer.courseCode }}</strong><br><small>{{ offer.course }}</small></td>
+                <td>Sección {{ offer.section }}</td>
+                <td>{{ offer.curriculum }}</td>
+                <td>{{ offer.studentsCount }}</td>
+                <td>{% include 'components/_status_badge.html.twig' with {status: offer.periodStatus} %}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <p class="help" style="margin-top:var(--space-3)">Solo los períodos ABIERTOS generan estudiantes disponibles para captura de notas.</p>
+      {% else %}
+        {% include 'components/_empty_state.html.twig' with {
+          title: 'Aún no tienes ofertas asignadas',
+          message: 'Tu cuenta docente está activa, pero Coordinación Académica todavía no te ha asignado un curso, período y sección. Cuando exista una asignación, los estudiantes aparecerán aquí automáticamente.'
+        } %}
+      {% endif %}
+    </section>
+  {% endif %}
+
+  <section class="card ge-directory__search" aria-labelledby="grade-student-search-title">
+    <div class="ge-directory__search-head">
+      <div>
+        <h2 id="grade-student-search-title">{{ ic.glyph('search', 18) }}<span>Buscar estudiante</span></h2>
+        <p>{{ filteredTotal }} estudiante{{ filteredTotal == 1 ? '' : 's' }} con inscripción académica.</p>
+      </div>
+    </div>
+
+    <form method="get" class="ge-directory__filter-grid">
+      <div class="field ge-directory__q">
+        <label for="q">Nombre o carné</label>
+        <div class="icon-input">
+          {{ ic.glyph('search', 16) }}
+          <input id="q" name="q" value="{{ q }}" placeholder="Ej. Ana López o STU-2025-0001" autocomplete="off">
+        </div>
+      </div>
+
+      {% if not teacherMode|default(false) %}
+        <div class="field">
+          <label for="career">Carrera</label>
+          <select id="career" name="career">
+            <option value="">Todas las carreras</option>
+            {% for c in careers %}
+              <option value="{{ c.id }}" {% if career == c.id ~ '' %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+
+      <div class="field">
+        <label for="per_page">Por página</label>
+        <select id="per_page" name="per_page">
+          {% for pp in constant('App\\Ui\\Paginator::ALLOWED_PER_PAGE') %}
+            <option value="{{ pp }}" {% if pager.perPage == pp %}selected{% endif %}>{{ pp }} estudiantes</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="ge-directory__actions">
+        <a class="btn btn--ghost" href="{{ path('app_grade_entry') }}">Limpiar</a>
+        <button class="btn btn--primary" type="submit">{{ ic.glyph('search', 15) }}<span>Buscar</span></button>
+      </div>
+    </form>
+  </section>
+
+  <section class="ge-directory__results" aria-labelledby="grade-results-title">
+    <div class="ge-directory__results-head">
+      <div>
+        <p class="ge-eyebrow">Evaluación</p>
+        <h2 id="grade-results-title">Estudiantes disponibles</h2>
+        <p>{{ filteredTotal }} de {{ totalWithEnrollment }} con al menos una inscripción.</p>
+      </div>
+    </div>
+
+    <div class="table-wrap ge-directory__table">
+      <table class="data">
+        <thead>
+          <tr>
+            <th scope="col">Estudiante</th>
+            <th scope="col">Carrera / pensum</th>
+            <th scope="col">Último período</th>
+            <th scope="col">Inscripción</th>
+            <th scope="col">Avance</th>
+            <th scope="col">Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in items %}
+            <tr>
+              <td>
+                <div class="ge-directory__student">
+                  <span class="avatar ge-directory__avatar">
+                    {% if student.photoPath and student.photoPath starts with '/uploads/students/' %}
+                      <img src="{{ student.photoPath }}" alt="">
+                    {% else %}
+                      <span aria-hidden="true">{{ student.firstNames|slice(0,1) ~ student.lastNames|slice(0,1) }}</span>
+                    {% endif %}
+                  </span>
+                  <span>
+                    <strong>{{ student.fullName }}</strong>
+                    <small>{{ student.code }}</small>
+                  </span>
+                </div>
+              </td>
+              <td>
+                <strong class="ge-directory__career">{{ student.career }}</strong>
+                <small>{{ student.curriculum }}</small>
+              </td>
+              <td>
+                <strong>{{ student.lastPeriod|default('—') }}</strong>
+                <small>{{ student.lastCycle|default('') }}{% if student.lastSection %} · Sección {{ student.lastSection }}{% endif %}</small>
+              </td>
+              <td>
+                <div class="ge-directory__badges">
+                  {% if student.lastPeriodStatus %}{% include 'components/_status_badge.html.twig' with {status: student.lastPeriodStatus} %}{% endif %}
+                  {% if student.lastEnrollmentStatus %}{% include 'components/_status_badge.html.twig' with {status: student.lastEnrollmentStatus} %}{% endif %}
+                </div>
+              </td>
+              <td>
+                <div class="ge-directory__progress">
+                  {% include 'components/_progress.html.twig' with {value: student.progress|round, showValue: false} %}
+                  <strong>{{ student.progress|round }}%</strong>
+                </div>
+              </td>
+              <td>
+                <a class="btn btn--primary ge-directory__open" href="{{ path('app_grade_entry', {student: student.id}) }}">
+                  {{ ic.glyph('pencil', 15) }}<span>Abrir notas</span>
+                </a>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="6">
+                {% include 'components/_empty_state.html.twig' with {
+                  title: teacherMode|default(false) ? 'No hay estudiantes disponibles para calificar' : 'No encontramos estudiantes',
+                  message: teacherMode|default(false)
+                    ? 'Revisa que tengas una oferta asignada en un período ABIERTO y que existan estudiantes INSCRITOS en el mismo pensum y sección.'
+                    : 'Prueba con otro nombre, carné o carrera.'
+                } %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% include 'components/_pagination.html.twig' with {
+      page: pager.page,
+      pages: pager.pages,
+      total: filteredTotal,
+      range: pager.range,
+      perPage: pager.perPage,
+      label: 'estudiantes',
+      showPerPage: false
+    } %}
+  </section>
+</div>
+{% endblock %}

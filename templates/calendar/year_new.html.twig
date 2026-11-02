@@ -1,0 +1,68 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set f = form|default({}) %}
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: 'Años y períodos', route: path('app_period_index')},
+  {label: 'Nuevo año lectivo'}
+] %}
+{% block title %}Nuevo año lectivo · Sistema Académico{% endblock %}
+
+{% block body %}
+<div class="va-page cal-form-page">
+  <header class="page-header page-header--hero cal-hero">
+    <div class="page-header__main">
+      <p class="cal-eyebrow">Calendario académico</p>
+      <h1>Nuevo año lectivo</h1>
+      <p class="subtitle">Define el marco anual que contendrá los períodos académicos.</p>
+      <blockquote class="page-header__quote">“El año lectivo organiza el calendario; el período controla la operación.”</blockquote>
+    </div>
+    <div class="page-header__action">
+      <a class="btn btn--secondary" href="{{ path('app_period_index') }}">{{ ic.glyph('arrowLeft', 16) }}<span>Volver</span></a>
+    </div>
+  </header>
+
+  <div class="cal-form-layout">
+    <form method="post" class="card cal-form" novalidate>
+      <input type="hidden" name="_token" value="{{ csrf_token('app_year_new') }}">
+      {% if errors|length %}
+        <div class="notice notice--danger"><strong>Revisa la información:</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></div>
+      {% endif %}
+
+      <div class="cal-form__head">
+        <span class="cal-form__number">01</span>
+        <div><h2>Datos del año lectivo</h2><p>Se crea inicialmente en estado PLANIFICADO.</p></div>
+      </div>
+
+      <div class="cal-form__grid">
+        <div class="field">
+          <label for="year">Año *</label>
+          <input id="year" name="year" type="number" min="1" step="1" value="{{ f.year|default('') }}" placeholder="2027" required>
+        </div>
+        <div class="field">
+          <label for="name">Nombre *</label>
+          <input id="name" name="name" value="{{ f.name|default('') }}" maxlength="100" placeholder="Año lectivo 2027" required>
+        </div>
+        <div class="field">
+          <label for="startDate">Fecha de inicio *</label>
+          <input id="startDate" name="startDate" type="date" value="{{ f.startDate|default('') }}" required>
+        </div>
+        <div class="field">
+          <label for="endDate">Fecha de fin *</label>
+          <input id="endDate" name="endDate" type="date" value="{{ f.endDate|default('') }}" required>
+        </div>
+      </div>
+
+      <div class="cal-form__actions">
+        <a class="btn btn--secondary" href="{{ path('app_period_index') }}">Cancelar</a>
+        <button class="btn btn--primary" type="submit">{{ ic.glyph('check', 16) }}<span>Crear año lectivo</span></button>
+      </div>
+    </form>
+
+    <aside class="card cal-context">
+      <span class="cal-context__icon">{{ ic.glyph('calendar', 20) }}</span>
+      <div><h2>Qué habilita</h2><p>Después de crear el año podrás registrar Semestre I y II. Las ofertas, inscripciones y notas utilizan esos períodos como contexto temporal.</p></div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

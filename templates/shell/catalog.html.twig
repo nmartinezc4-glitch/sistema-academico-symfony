@@ -1,0 +1,50 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set crumbs = [{label: 'Inicio', route: path('app_dashboard')}, {label: title}] %}
+{% set catalogIcons = {
+  'Carreras': 'cap',
+  'Cursos': 'book',
+  'Años y períodos': 'calendar',
+  'Secciones': 'users',
+  'Ofertas académicas': 'layers',
+  'Políticas académicas': 'sliders'
+} %}
+{% block title %}{{ title }}{% endblock %}
+{% block body %}
+<div class="vb-page vb-page--catalog">
+
+  {% include 'components/_page_header.html.twig' with {
+    eyebrow: catalogEyebrow|default('Estructura académica'),
+    title: title,
+    subtitle: subtitle|default('Consulta y administración del catálogo académico.'),
+    quote: '“Los datos ordenados también construyen claridad.”',
+    hero: true,
+    primaryAction: (createRoute is defined and createRoute and is_granted('ROLE_COORDINACION')) ? {
+      label: createLabel|default('Nuevo registro'),
+      route: path(createRoute)
+    } : null
+  } %}
+
+  <div class="vb-catbar">
+    <div class="vb-chips" role="group" aria-label="Resumen del catálogo">
+      <span class="chip chip--active">{{ ic.glyph(catalogIcons[title]|default('table'), 14) }} {{ title }}</span>
+      <span class="chip">{{ ic.glyph('list', 14) }} <span class="vb-count">{{ items|length }}</span> registros</span>
+      <span class="chip">{{ ic.glyph('table', 14) }} {{ columns|length }} columnas</span>
+    </div>
+
+  </div>
+
+  <section>
+    <div class="vb-panel__head">
+      <div>
+        <h2 class="vb-panel__title">{{ ic.glyph(catalogIcons[title]|default('table'), 20) }}<span>{{ title }}</span></h2>
+        <p class="vb-panel__sub">Consulta los registros disponibles y su estado actual.</p>
+      </div>
+      <div class="vb-panel__tools"></div>
+    </div>
+    {% include 'components/_data_table.html.twig' with {columns: columns, rows: items, emptyTitle: 'Sin registros', emptyMessage: 'No hay registros disponibles en este catálogo.'} %}
+  </section>
+
+  <p class="vb-note">{{ catalogNote|default('Los registros activos alimentan los formularios académicos relacionados. Los datos históricos se conservan mediante referencias y desactivación lógica.') }}</p>
+</div>
+{% endblock %}

@@ -1,0 +1,122 @@
+/* Gestión académica: ofertas e inscripción */
+.am-page { gap: var(--space-5, 20px); }
+.am-hero,
+.am-page .page-header--hero {
+  min-height: 132px;
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-6);
+  margin-bottom: 0;
+  align-items: center;
+}
+.am-page h1 { font-size: clamp(34px, 3vw, 42px); }
+.am-eyebrow {
+  margin: 0 0 4px;
+  color: var(--terracotta-deep);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.am-metrics { gap: var(--space-3); }
+.am-metrics .metric-card { padding: var(--space-4); }
+
+.am-filters { padding: var(--space-5,20px) var(--space-6); }
+.am-filters__head { margin-bottom: var(--space-4); }
+.am-filters__head h2 { display:flex;align-items:center;gap:8px;margin:0;font-size:20px; }
+.am-filters__head p { margin:3px 0 0;color:var(--ink-muted);font-size:12.5px; }
+.am-filters__grid {
+  display:grid;
+  grid-template-columns:minmax(0,2fr) repeat(3,minmax(150px,1fr)) auto;
+  gap:var(--space-4);
+  align-items:end;
+}
+.am-filters__grid .field { margin-bottom:0; }
+.am-filters__actions { display:flex;gap:var(--space-2);justify-content:flex-end; }
+.am-filters__actions .btn { min-height:42px; }
+
+.am-section-head { display:flex;justify-content:space-between;align-items:flex-end;gap:var(--space-4);margin-bottom:var(--space-3); }
+.am-section-head h2 { margin:0;font-size:23px; }
+.am-section-head p:last-child { margin:3px 0 0;color:var(--ink-muted);font-size:12.5px; }
+.am-table table.data { width:100%;min-width:960px; }
+.am-table th,.am-table td { padding:10px 12px;vertical-align:middle; }
+.am-table td small { display:block;margin-top:2px;color:var(--ink-muted);font-size:11px; }
+.am-section-chip { display:inline-flex;min-width:30px;justify-content:center;padding:4px 8px;border-radius:999px;background:var(--surface-muted);font-weight:700; }
+
+.am-form-layout,
+.am-enrollment-layout {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 330px;
+  gap:var(--space-5,20px);
+  align-items:start;
+}
+.am-form { padding:var(--space-6); }
+.am-form .notice { margin-bottom:var(--space-5,20px); }
+.am-form .notice ul { margin:6px 0 0;padding-left:20px; }
+.am-form__head {
+  display:flex;align-items:flex-start;gap:var(--space-3);
+  padding-bottom:var(--space-4);margin-bottom:var(--space-5,20px);border-bottom:1px solid var(--line);
+}
+.am-form__number {
+  width:34px;height:34px;flex:none;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--danger-bg);color:var(--burgundy);font-family:var(--font-display);font-weight:700;
+}
+.am-form__head h2 { margin:0;font-size:22px; }
+.am-form__head p { margin:3px 0 0;color:var(--ink-muted);font-size:12.5px; }
+.am-form__grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4); }
+.am-form__grid .field { margin-bottom:0; }
+.am-form__wide { grid-column:1/-1; }
+.am-form__actions { display:flex;justify-content:flex-end;gap:var(--space-2);margin-top:var(--space-6); }
+.am-form__note { margin-top:var(--space-5,20px);display:flex;gap:10px;align-items:flex-start; }
+.am-form__note p { margin:3px 0 0; }
+
+.am-context-card { position:sticky;top:calc(var(--topbar-height,72px) + var(--space-4));display:flex;gap:var(--space-3);padding:var(--space-5,20px); }
+.am-context-card__icon { width:38px;height:38px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--danger-bg);color:var(--terracotta-deep); }
+.am-context-card h2 { margin:0;font-size:18px; }
+.am-context-card p { margin:5px 0 0;color:var(--ink-soft);font-size:12.5px;line-height:1.55; }
+.am-equation { display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:var(--space-4);font-size:11px; }
+.am-equation span { padding:5px 8px;border-radius:999px;background:var(--surface-muted); }
+
+.am-student-context {
+  display:grid;
+  grid-template-columns:minmax(280px,1.2fr) minmax(0,1.8fr);
+  gap:var(--space-6);
+  align-items:center;
+  padding:var(--space-5,20px) var(--space-6);
+}
+.am-student-context h2 { margin:0;font-size:22px; }
+.am-student-context p:last-child { margin:4px 0 0;color:var(--ink-soft); }
+.am-student-context dl { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4);margin:0;padding-left:var(--space-6);border-left:1px solid var(--line); }
+.am-student-context dt { color:var(--ink-muted);font-size:11px; }
+.am-student-context dd { margin:4px 0 0;font-weight:600;font-size:12.5px; }
+
+.am-history-card { position:sticky;top:calc(var(--topbar-height,72px) + var(--space-4));padding:var(--space-5,20px); }
+.am-history-card__head { padding-bottom:var(--space-3);margin-bottom:var(--space-4);border-bottom:1px solid var(--line); }
+.am-history-card__head h2 { display:flex;gap:7px;align-items:center;margin:0;font-size:18px; }
+.am-history-card__head p { margin:3px 0 0;color:var(--ink-muted);font-size:11.5px; }
+.am-history-list { list-style:none;margin:0;padding:0;display:grid;gap:var(--space-3); }
+.am-history-list li { display:grid;grid-template-columns:24px minmax(0,1fr);gap:10px;align-items:flex-start; }
+.am-history-list__node { width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--success);color:var(--surface); }
+.am-history-list__title { display:flex;justify-content:space-between;gap:8px;align-items:center; }
+.am-history-list li span:not(.am-history-list__node):not(.badge) { display:block;margin-top:3px;color:var(--ink-soft);font-size:11.5px; }
+.am-history-list li small { display:block;margin-top:3px;color:var(--ink-muted);font-size:10.5px; }
+.am-history-list__empty { color:var(--ink-muted);font-size:12.5px;grid-template-columns:1fr !important; }
+
+@media (max-width:1199px){
+  .am-filters__grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .am-filters__actions { grid-column:1/-1; }
+  .am-form-layout,.am-enrollment-layout { grid-template-columns:1fr; }
+  .am-context-card,.am-history-card { position:static; }
+}
+@media (max-width:767px){
+  .am-hero,.am-page .page-header--hero { min-height:0;grid-template-columns:1fr;padding-top:var(--space-4);padding-bottom:var(--space-5,20px); }
+  .am-filters { padding:var(--space-4); }
+  .am-filters__grid,.am-form__grid { grid-template-columns:1fr; }
+  .am-filters__actions { grid-column:auto; }
+  .am-form { padding:var(--space-4); }
+  .am-form__wide { grid-column:auto; }
+  .am-form__actions { flex-direction:column-reverse; }
+  .am-form__actions .btn { width:100%; }
+  .am-student-context { grid-template-columns:1fr;padding:var(--space-4); }
+  .am-student-context dl { grid-template-columns:1fr;padding:var(--space-4) 0 0;border:0;border-top:1px solid var(--line); }
+}

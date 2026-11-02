@@ -1,0 +1,311 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set crumbs = [{label: 'Inicio', route: path('app_dashboard')}, {label: 'Reportes', route: path('app_report_index')}, {label: 'Notas por carrera'}] %}
+{% block title %}Notas por carrera{% endblock %}
+{% block body %}
+{% include 'components/_page_header.html.twig' with {
+  eyebrow: 'Reportes',
+  title: 'Notas por carrera',
+  subtitle: 'Desempeño académico por carrera y período.',
+  quote: '“Los datos también cuentan historias de crecimiento.”',
+  hero: true
+} %}
+
+{# ── Catálogos de los filtros, calculados antes de filtrar ── #}
+{% set allPeriodsH = {} %}
+{% set allCareersH = {} %}
+{% set allSectionsH = {} %}
+{% set allStatusesH = {} %}
+{% for r in rows %}
+  {% set allPeriodsH = allPeriodsH|merge({(r.period): true}) %}
+  {% set allCareersH = allCareersH|merge({(r.career): true}) %}
+  {% set allSectionsH = allSectionsH|merge({(r.section): true}) %}
+  {% set allStatusesH = allStatusesH|merge({(r.status): true}) %}
+{% endfor %}
+{% set allPeriods = allPeriodsH|keys|sort %}
+{% set allCareers = allCareersH|keys|sort %}
+{% set allSections = allSectionsH|keys|sort %}
+{% set allStatuses = allStatusesH|keys|sort %}
+
+{# ── Filtros (aplicados en la vista sobre los datos del ViewModel) ── #}
+{% set qp = app.request.query %}
+{% set fPeriodo = qp.get('periodo', '') %}
+{% set fCarrera = qp.get('carrera', '') %}
+{% set fSeccion = qp.get('seccion', '') %}
+{% set fEstado = qp.get('estado', '') %}
+{% set rows = rows|filter(r =>
+  (fPeriodo == '' or r.period == fPeriodo)
+  and (fCarrera == '' or r.career == fCarrera)
+  and (fSeccion == '' or r.section == fSeccion)
+  and (fEstado == '' or r.status == fEstado)
+) %}
+
+{% set total = rows|length %}
+{% set graded = rows|filter(r => r.grade is not null) %}
+{% set gTotal = graded|length %}
+{% set avg = gTotal ? (graded|reduce((a, r) => a + r.grade, 0) / gTotal) : 0 %}
+{% set approved = graded|filter(r => r.status == 'APROBADO')|length %}
+{% set failed = graded|filter(r => r.status == 'REPROBADO')|length %}
+{% set pending = total - gTotal %}
+{% set pctApproval = gTotal ? (approved * 100 / gTotal) : 0 %}
+{% set pctGraded = total ? (gTotal * 100 / total) : 0 %}
+{% set careersH = {} %}
+{% set periodsH = {} %}
+{% for r in rows %}
+  {% set careersH = careersH|merge({(r.career): true}) %}
+  {% set periodsH = periodsH|merge({(r.period): true}) %}
+{% endfor %}
+{% set careers = careersH|keys|sort %}
+{% set periods = periodsH|keys|sort %}
+{% set palette = ['var(--surface-muted)', 'var(--warning)', 'var(--success)', 'var(--terracotta-deep)'] %}
+{% set pcount = palette|length %}
+
+<form class="vc-filters" method="get" action="{{ path('app_report_grades_career') }}" aria-label="Filtros del reporte">
+  <div class="field">
+    <label for="f-periodo">Período académico</label>
+    <select id="f-periodo" name="periodo">
+      <option value="">Todos los períodos</option>
+      {% for p in allPeriods|reverse %}<option value="{{ p }}" {% if fPeriodo == p %}selected{% endif %}>{{ p }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-carrera">Carrera</label>
+    <select id="f-carrera" name="carrera">
+      <option value="">Todas las carreras</option>
+      {% for c in allCareers %}<option value="{{ c }}" {% if fCarrera == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-seccion">Sección <span style="font-weight:400;color:var(--ink-muted)">(opcional)</span></label>
+    <select id="f-seccion" name="seccion">
+      <option value="">Todas las secciones</option>
+      {% for s in allSections %}<option value="{{ s }}" {% if fSeccion == s %}selected{% endif %}>Sección {{ s }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-estado">Estado de resultado</label>
+    <select id="f-estado" name="estado">
+      <option value="">Todos</option>
+      {% for st in allStatuses %}<option value="{{ st }}" {% if fEstado == st %}selected{% endif %}>{{ st|title }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="vc-filters__actions">
+    <a class="btn btn--ghost" href="{{ path('app_report_grades_career') }}">{{ ic.filter(16) }} Limpiar</a>
+    {% include 'components/_report_export_actions.html.twig' with {report: 'notas-carrera'} %}
+    <button class="btn btn--primary" type="submit">{{ ic.search(16) }} Generar reporte</button>
+  </div>
+</form>
+
+<div class="vc-kpis">
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.chart(24), tone: 'terracotta',
+    label: 'Promedio general', value: avg|round(1),
+    caption: 'Sobre ' ~ gTotal ~ ' resultados calificados'
+  } %}
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.cap(24), tone: 'success',
+    label: 'Tasa de aprobación por intento', value: pctApproval|round, suffix: '%',
+    caption: approved ~ ' de ' ~ gTotal ~ ' intentos calificados',
+    progress: pctApproval|round
+  } %}
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.file(24), tone: 'info',
+    label: 'Resultados calificados', value: gTotal,
+    caption: 'de ' ~ total ~ ' resultados registrados · ' ~ pctGraded|round ~ ' % completados'
+  } %}
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.clock(24), tone: 'warning',
+    label: 'Pendientes de calificación', value: pending,
+    caption: (total ? (pending * 100 / total)|round : 0) ~ ' % del total'
+  } %}
+</div>
+
+{% set maxAvg = 0 %}
+{% set series = [] %}
+{% for c in careers %}
+  {% set bars = [] %}
+  {% for p in periods %}
+    {% set grp = rows|filter(r => r.career == c and r.period == p and r.grade is not null) %}
+    {% set n = grp|length %}
+    {% if n %}
+      {% set a = grp|reduce((x, r) => x + r.grade, 0) / n %}
+      {% set bars = bars|merge([{period: p, avg: a}]) %}
+      {% if a > maxAvg %}{% set maxAvg = a %}{% endif %}
+    {% endif %}
+  {% endfor %}
+  {% set series = series|merge([{career: c, bars: bars}]) %}
+{% endfor %}
+{% set scale = maxAvg > 0 ? maxAvg : 1 %}
+
+<div class="vc-cols">
+  <section class="vc-panel">
+    <div class="vc-panel__head">
+      <div class="vc-panel__title">
+        {{ ic.chart(20) }}
+        <div>
+          <h2>Comparativo de promedios por carrera</h2>
+          <p class="vc-panel__sub">Promedio general por período académico.</p>
+        </div>
+      </div>
+      <div class="vc-legend">
+        {% for p in periods %}
+          <span><span class="dot" style="background:{{ palette[loop.index0 % pcount] }}"></span>{{ p }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="vc-chart">
+      {% for item in series %}
+        <div class="vc-chart__group">
+          <div class="vc-chart__bars">
+            {% for bar in item.bars %}
+              <div class="vc-col">
+                <span class="vc-col__val">{{ bar.avg|round(1) }}</span>
+                <span class="vc-col__bar" style="height:{{ (bar.avg * 80 / scale)|round }}%;background:{{ palette[loop.index0 % pcount] }}"></span>
+              </div>
+            {% endfor %}
+          </div>
+          <span class="vc-chart__label">{{ item.career }}</span>
+        </div>
+      {% else %}
+        <div class="empty-state" style="width:100%"><strong>Sin datos</strong><p>No hay notas para los filtros seleccionados.</p></div>
+      {% endfor %}
+    </div>
+    <p class="vc-chart__axis">Eje vertical: promedio (0–100)</p>
+  </section>
+
+  <section class="vc-panel">
+    <div class="vc-panel__head">
+      <div class="vc-panel__title">
+        {{ ic.book(20) }}
+        <div>
+          <h2>Resumen por carrera y curso</h2>
+          <p class="vc-panel__sub">Promedios y distribución de resultados en el período seleccionado.</p>
+        </div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th scope="col">Carrera</th>
+            <th scope="col">Total cursos</th>
+            <th scope="col">Promedio</th>
+            <th scope="col">Aprobados</th>
+            <th scope="col">Reprobados</th>
+            <th scope="col">Pendientes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in careers %}
+            {% set crows = rows|filter(r => r.career == c) %}
+            {% set cgraded = crows|filter(r => r.grade is not null) %}
+            {% set cn = cgraded|length %}
+            {% set ctot = crows|length %}
+            {% set cavg = cn ? (cgraded|reduce((a, r) => a + r.grade, 0) / cn) : 0 %}
+            {% set cok = cgraded|filter(r => r.status == 'APROBADO')|length %}
+            {% set cko = cgraded|filter(r => r.status == 'REPROBADO')|length %}
+            {% set cpend = ctot - cn %}
+            {% set ccourseH = {} %}
+            {% for cr in crows %}{% set ccourseH = ccourseH|merge({(cr.course): true}) %}{% endfor %}
+            {% set ccourses = ccourseH|length %}
+            <tr>
+              <td>{{ c }}</td>
+              <td class="vc-num">{{ ccourses }}</td>
+              <td><span class="badge badge--success vc-num">{{ cavg|round(1) }}</span></td>
+              <td class="vc-num">{{ cok }} ({{ ctot ? (cok * 100 / ctot)|round : 0 }} %)</td>
+              <td class="vc-num">{{ cko }} ({{ ctot ? (cko * 100 / ctot)|round : 0 }} %)</td>
+              <td class="vc-num">{{ cpend }} ({{ ctot ? (cpend * 100 / ctot)|round : 0 }} %)</td>
+            </tr>
+          {% endfor %}
+          {% set allCourseH = {} %}
+          {% for cr in rows %}{% set allCourseH = allCourseH|merge({(cr.course): true}) %}{% endfor %}
+          {% set allCourses = allCourseH|length %}
+          <tr>
+            <td><strong>Total general</strong></td>
+            <td class="vc-num"><strong>{{ allCourses }}</strong></td>
+            <td><span class="badge badge--success vc-num">{{ avg|round(1) }}</span></td>
+            <td class="vc-num"><strong>{{ approved }} ({{ pctApproval|round }} %)</strong></td>
+            <td class="vc-num"><strong>{{ failed }} ({{ gTotal ? (failed * 100 / gTotal)|round : 0 }} %)</strong></td>
+            <td class="vc-num"><strong>{{ pending }} ({{ total ? (pending * 100 / total)|round : 0 }} %)</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="vc-panel__foot">Los porcentajes de aprobación y repitencia se calculan sobre resultados registrados por carrera.</p>
+  </section>
+</div>
+
+<section class="vc-panel">
+  <div class="vc-panel__head">
+    <div class="vc-panel__title">
+      {{ ic.list(20) }}
+      <div>
+        <h2>Resultados detallados</h2>
+        <p class="vc-panel__sub">Notas por estudiante, curso y sección.</p>
+      </div>
+    </div>
+    <div class="vc-panel__tools">
+      <a class="btn btn--secondary" href="{{ path('app_report_export_xlsx', ({report: 'notas-carrera'}|merge(app.request.query.all))) }}">{{ ic.download(16) }} Descargar Excel</a>
+    </div>
+  </div>
+
+  {% set pageSize = 25 %}
+  {% set pages = total > 0 ? ((total / pageSize)|round(0, 'ceil')) : 1 %}
+  {% set currentPage = app.request.query.get('page', 1) + 0 %}
+  {% set currentPage = currentPage < 1 ? 1 : (currentPage > pages ? pages : currentPage) %}
+  {% set detailRows = rows|slice((currentPage - 1) * pageSize, pageSize) %}
+  <div class="vc-pagewrap">
+    <div class="vc-pager">
+      <div class="vc-pager__pages">
+        {% if currentPage > 1 %}
+          <a class="btn btn--secondary" href="{{ path('app_report_grades_career', app.request.query.all|merge({page: currentPage - 1})) }}">{{ ic.chevronLeft(14) }} Anterior</a>
+        {% endif %}
+        <span class="chip chip--active">Página {{ currentPage }} de {{ pages }}</span>
+        {% if currentPage < pages %}
+          <a class="btn btn--secondary" href="{{ path('app_report_grades_career', app.request.query.all|merge({page: currentPage + 1})) }}">Siguiente {{ ic.chevronRight(14) }}</a>
+        {% endif %}
+      </div>
+      <span class="vc-pager__info">Mostrando {{ detailRows|length }} de {{ total }} resultados · {{ pageSize }} por página</span>
+    </div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th scope="col">Estudiante</th>
+            <th scope="col">Curso</th>
+            <th scope="col">Sección</th>
+            <th scope="col">Carrera</th>
+            <th scope="col">Nota</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Intento</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in detailRows %}
+            <tr>
+              <td>
+                <div class="vc-cell">
+                  <span class="vc-cell__avatar" aria-hidden="true">{{ r.student|split(' ')|map(p => p[:1])|slice(0, 2)|join('') }}</span>
+                  <div class="vc-cell__body">
+                    <strong>{{ r.student }}</strong>
+                    <small>{{ r.code }}</small>
+                  </div>
+                </div>
+              </td>
+              <td>{{ r.courseCode ? r.courseCode ~ ' · ' : '' }}{{ r.course }}</td>
+              <td>Sección {{ r.section ?? '—' }}</td>
+              <td>{{ r.career }}</td>
+              <td class="vc-num">{{ r.grade ?? '—' }}</td>
+              <td>{% include 'components/_status_badge.html.twig' with {status: r.status} %}</td>
+              <td class="vc-num">{{ r.attempt ?? '—' }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="7">{% include 'components/_empty_state.html.twig' with {title: 'Sin resultados', message: 'No hay información para los filtros seleccionados.'} %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

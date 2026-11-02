@@ -1,0 +1,190 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: 'Alumnos', route: path('app_student_index')},
+  {label: vm.fullName, route: path('app_student_show', {id: vm.id})},
+  {label: 'Editar ficha'}
+] %}
+{% block title %}Editar estudiante · Sistema Académico{% endblock %}
+{% set f = form|default({}) %}
+{% set values = {
+  firstNames: f.firstNames ?? vm.firstNames,
+  lastNames: f.lastNames ?? vm.lastNames,
+  birthDate: f.birthDate ?? vm.birthDate,
+  address: f.address ?? vm.address,
+  programStartDate: f.programStartDate ?? program.startDate,
+  curriculumId: f.curriculumId ?? program.curriculumId,
+  careerFilter: f.careerFilter ?? vm.careerId,
+  programStatus: f.programStatus ?? program.status
+} %}
+{% set curriculumLocked = history.results > 0 %}
+
+{% block body %}
+<div class="va-page sf-page">
+  {% include 'components/_page_header.html.twig' with {
+    hero: true,
+    title: 'Editar ficha',
+    subtitle: 'Actualiza los datos personales y la asignación académica de ' ~ vm.fullName ~ '.'
+  } %}
+
+  <div class="sf-layout" data-controller="student-form-summary" data-student-form-summary-fixed-code-value="{{ vm.code }}">
+    <form id="student-form" method="post" enctype="multipart/form-data" data-controller="dirty-form" novalidate class="sf-form">
+      <input type="hidden" name="_token" value="{{ csrf_token('app_student_edit') }}">
+      {% if errors is defined and errors|length > 0 %}
+        <div class="notice notice--danger sf-errors" role="alert">
+          <strong>No fue posible guardar los cambios:</strong>
+          <ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+        </div>
+      {% endif %}
+
+      <section class="card sf-section">
+        <header class="sf-section__head">
+          <span class="sf-section__index">01</span>
+          <div><h2>Identidad del estudiante</h2><p>Información personal persistida en la ficha académica.</p></div>
+        </header>
+
+        <div class="sf-personal-grid">
+          <div class="sf-photo" data-controller="photo-preview">
+            <div class="sf-photo__preview-wrap" data-photo-preview-target="preview">
+              {% if vm.photoPath and vm.photoPath starts with '/uploads/students/' %}
+                <img src="{{ vm.photoPath }}" alt="Fotografía actual de {{ vm.fullName }}" class="sf-photo__preview">
+                <span class="sf-photo__filename">Fotografía actual</span>
+              {% else %}
+                <span class="avatar sf-photo__avatar" aria-hidden="true">{{ vm.firstNames|slice(0, 1) ~ vm.lastNames|slice(0, 1) }}</span>
+                <span class="sf-photo__hint">Sin fotografía cargada</span>
+              {% endif %}
+            </div>
+            <label class="btn btn--secondary sf-photo__button" for="photo">{{ ic.glyph('camera', 15) }}<span>Cambiar foto</span></label>
+            <input id="photo" class="sf-photo__input" name="photo" type="file" accept="image/jpeg,image/png,image/webp" data-photo-preview-target="input" data-action="change->photo-preview#previewLocal">
+            <p class="help">Opcional · JPG/PNG/WEBP · máx. 2 MB.</p>
+          </div>
+
+          <div class="sf-fields">
+            <div class="field">
+              <label>Carné académico</label>
+              <div class="sf-generated-id sf-generated-id--locked">
+                <span class="sf-generated-id__icon">{{ ic.glyph('lock', 16) }}</span>
+                <div>
+                  <strong>{{ vm.code }}</strong>
+                  <span>Identidad generada por el sistema; no se modifica.</span>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label for="birthDate">Fecha de nacimiento *</label>
+              <input id="birthDate" name="birthDate" type="date" value="{{ values.birthDate }}" required data-student-form-summary-target="birthDate" data-action="change->student-form-summary#update">
+            </div>
+            <div class="field">
+              <label for="firstNames">Nombres *</label>
+              <input id="firstNames" name="firstNames" value="{{ values.firstNames }}" required data-student-form-summary-target="firstNames" data-action="input->student-form-summary#update">
+            </div>
+            <div class="field">
+              <label for="lastNames">Apellidos *</label>
+              <input id="lastNames" name="lastNames" value="{{ values.lastNames }}" required data-student-form-summary-target="lastNames" data-action="input->student-form-summary#update">
+            </div>
+
+            <div class="field sf-field--wide">
+              <label for="address">Dirección de residencia</label>
+              <textarea id="address" name="address" rows="2" maxlength="255" placeholder="Zona, colonia, municipio o referencia de residencia" data-student-form-summary-target="address" data-action="input->student-form-summary#update">{{ values.address|default('') }}</textarea>
+              <div class="help">Dato personal persistido en la ficha. Máximo 255 caracteres.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card sf-section">
+        <header class="sf-section__head">
+          <span class="sf-section__index">02</span>
+          <div><h2>Programa académico</h2><p>Configuración académica vigente del estudiante.</p></div>
+          {% if curriculumLocked %}<span class="badge badge--warning sf-section__status">{{ ic.glyph('lock', 13) }} Historial protegido</span>{% endif %}
+        </header>
+
+        {% if curriculumLocked %}
+          <input type="hidden" name="curriculumId" value="{{ values.curriculumId }}">
+          <input type="hidden" name="careerFilter" value="{{ values.careerFilter }}">
+          <div class="sf-locked-program">
+            <div class="sf-locked-program__item"><span>{{ ic.glyph('cap', 17) }}</span><div><small>Carrera</small><strong>{{ vm.career }}</strong></div></div>
+            <div class="sf-locked-program__item"><span>{{ ic.glyph('book', 17) }}</span><div><small>Pensum</small><strong>{{ vm.curriculum }}</strong></div></div>
+            <div class="sf-lock-note">{{ ic.glyph('lock', 16) }}<p>El pensum no puede modificarse porque el estudiante ya tiene calificaciones registradas. Esta protección preserva su historial académico.</p></div>
+          </div>
+        {% else %}
+          <div class="sf-academic-grid sf-academic-grid--catalog" data-controller="dependent-select" data-dependent-select-curricula-value="{{ curricula|json_encode|e('html_attr') }}">
+            <div class="field">
+              <label for="careerFilter">Carrera *</label>
+              <select id="careerFilter" name="careerFilter" required data-dependent-select-target="career" data-student-form-summary-target="career" data-action="change->dependent-select#refresh change->student-form-summary#update">
+                <option value="">Seleccione una carrera…</option>
+                {% for c in careers %}<option value="{{ c.id }}" {% if values.careerFilter == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label for="curriculumId">Pensum *</label>
+              <select id="curriculumId" name="curriculumId" required data-dependent-select-target="curriculum" data-student-form-summary-target="curriculum" data-action="change->student-form-summary#update">
+                <option value="">Seleccione…</option>
+                {% for c in curricula %}<option value="{{ c.id }}" {% if c.id == values.curriculumId %}selected{% endif %}>{{ c.code }} · {{ c.name }}</option>{% endfor %}
+              </select>
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="sf-academic-grid sf-academic-grid--dates">
+          <div class="field">
+            <label for="programStartDate">Fecha de ingreso *</label>
+            <input id="programStartDate" name="programStartDate" type="date" value="{{ values.programStartDate }}" required data-dependent-select-target="programStart" data-student-form-summary-target="programStart" data-action="change->dependent-select#refresh change->student-form-summary#update">
+          </div>
+          <div class="field">
+            <label for="programStatus">Estado en el programa *</label>
+            <select id="programStatus" name="programStatus" required data-student-form-summary-target="programStatus" data-action="change->student-form-summary#update">
+              {% for s in ['ACTIVO', 'FINALIZADO', 'RETIRADO'] %}<option value="{{ s }}" {% if values.programStatus == s %}selected{% endif %}>{{ status_label(s) }}</option>{% endfor %}
+            </select>
+            <div class="help">Al finalizar o retirar un programa se conserva el historial académico existente.</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="sf-form__footer">
+        <a class="btn btn--secondary" href="{{ path('app_student_show', {id: vm.id}) }}">{{ ic.glyph('x', 16) }}<span>Cancelar</span></a>
+        <button class="btn btn--primary" type="submit"><span>Guardar cambios</span>{{ ic.glyph('arrowRight', 16) }}</button>
+      </div>
+    </form>
+
+    <aside class="sf-rail" aria-label="Resumen de la ficha">
+      <section class="card sf-summary">
+        <div class="sf-summary__head">
+          <span class="sf-summary__icon">{{ ic.glyph('user', 19) }}</span>
+          <div><h2>Vista previa</h2><p>Resumen de la ficha que estás editando.</p></div>
+        </div>
+
+        <div class="sf-summary__person">
+          <span class="avatar sf-summary__avatar" aria-hidden="true">{{ vm.firstNames|slice(0, 1) ~ vm.lastNames|slice(0, 1) }}</span>
+          <div><strong data-student-form-summary-target="summaryName">{{ vm.fullName }}</strong><span data-student-form-summary-target="summaryCode">{{ vm.code }}</span></div>
+        </div>
+
+        <dl class="sf-summary__list">
+          <div><dt>Nacimiento</dt><dd data-student-form-summary-target="summaryBirth">{{ vm.birthDate ? vm.birthDate|date('d/m/Y') : '—' }}</dd></div>
+          <div><dt>Dirección</dt><dd data-student-form-summary-target="summaryAddress">{{ vm.address|default('No registrada') }}</dd></div>
+          <div><dt>Carrera</dt><dd data-student-form-summary-target="summaryCareer">{{ vm.career }}</dd></div>
+          <div><dt>Pensum</dt><dd data-student-form-summary-target="summaryCurriculum">{{ vm.curriculum }}</dd></div>
+          <div><dt>Ingreso</dt><dd data-student-form-summary-target="summaryStart">{{ program.startDate ? program.startDate|date('d/m/Y') : '—' }}</dd></div>
+          <div><dt>Estado</dt><dd><span class="badge badge--{{ status_tone(values.programStatus) }}" data-student-form-summary-target="summaryStatus">{{ status_label(values.programStatus) }}</span></dd></div>
+        </dl>
+      </section>
+
+      <section class="card sf-integrity">
+        <span class="sf-integrity__icon" aria-hidden="true">{{ ic.glyph('database', 19) }}</span>
+        <div><h3>Historial académico</h3><p>{{ history.periods }} inscripción{{ history.periods == 1 ? '' : 'es' }} y {{ history.results }} resultado{{ history.results == 1 ? '' : 's' }} vinculados a esta ficha.</p></div>
+      </section>
+
+      {% if history.periods == 0 %}
+        <section class="card sf-delete">
+          <div><h3>{{ ic.glyph('trash', 17) }} Eliminar ficha</h3><p>Solo está disponible porque todavía no existe historial académico.</p></div>
+          <form method="post" action="{{ path('app_student_delete', {id: vm.id}) }}" onsubmit="return confirm('¿Eliminar definitivamente esta ficha? Esta acción no se puede deshacer.')">
+            <input type="hidden" name="_token" value="{{ csrf_token('app_student_delete') }}">
+            <button class="btn btn--danger" type="submit">Eliminar estudiante</button>
+          </form>
+        </section>
+      {% endif %}
+    </aside>
+  </div>
+</div>
+{% endblock %}

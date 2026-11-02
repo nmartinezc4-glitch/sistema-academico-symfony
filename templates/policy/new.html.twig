@@ -1,0 +1,79 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set f = form|default({}) %}
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: 'Políticas académicas', route: path('app_policy_index')},
+  {label: 'Nueva política'}
+] %}
+{% block title %}Nueva política académica · Sistema Académico{% endblock %}
+
+{% block body %}
+<div class="va-page cal-form-page">
+  <header class="page-header page-header--hero cal-hero">
+    <div class="page-header__main">
+      <p class="cal-eyebrow">Configuración</p>
+      <h1>Nueva política académica</h1>
+      <p class="subtitle">Versiona la nota mínima de aprobación sin reescribir períodos históricos.</p>
+      <blockquote class="page-header__quote">“Una reforma académica cambia el futuro, no el pasado.”</blockquote>
+    </div>
+    <div class="page-header__action">
+      <a class="btn btn--secondary" href="{{ path('app_policy_index') }}">{{ ic.glyph('arrowLeft', 16) }}<span>Volver</span></a>
+    </div>
+  </header>
+
+  <div class="cal-form-layout">
+    <form method="post" class="card cal-form" novalidate>
+      <input type="hidden" name="_token" value="{{ csrf_token('app_policy_new') }}">
+      {% if errors|length %}
+        <div class="notice notice--danger"><strong>Revisa la política:</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></div>
+      {% endif %}
+
+      <div class="cal-form__head">
+        <span class="cal-form__number">01</span>
+        <div><h2>Regla de aprobación</h2><p>La vigencia se versiona y el sistema protege las reglas ya utilizadas.</p></div>
+      </div>
+
+      <div class="cal-form__grid">
+        <div class="field">
+          <label>Código institucional</label>
+          <div class="cal-autocode" aria-label="Código generado automáticamente">
+            <strong>POL-AAAA-NN</strong>
+            <span>Se asigna según el año de vigencia y el siguiente correlativo.</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="passingGrade">Nota mínima *</label>
+          <input id="passingGrade" name="passingGrade" type="number" min="0" max="100" step="0.01" value="{{ f.passingGrade|default('') }}" placeholder="61.00" required>
+        </div>
+        <div class="field cal-form__wide">
+          <label for="name">Nombre *</label>
+          <input id="name" name="name" value="{{ f.name|default('') }}" maxlength="150" placeholder="Política académica 2028" required>
+        </div>
+        <div class="field">
+          <label for="validFrom">Vigente desde *</label>
+          <input id="validFrom" name="validFrom" type="date" value="{{ f.validFrom|default('') }}" required>
+        </div>
+      </div>
+
+      <div class="notice notice--warning cal-form__policy-note">
+        {{ ic.glyph('lock', 16) }}
+        <div>
+          <strong>Protección histórica</strong>
+          <p>Una política utilizada por algún período no puede cambiar su nota mínima ni su fecha de vigencia. Para reformar la regla se crea otra política con fecha futura.</p>
+        </div>
+      </div>
+
+      <div class="cal-form__actions">
+        <a class="btn btn--secondary" href="{{ path('app_policy_index') }}">Cancelar</a>
+        <button class="btn btn--primary" type="submit">{{ ic.glyph('check', 16) }}<span>Crear política</span></button>
+      </div>
+    </form>
+
+    <aside class="card cal-context">
+      <span class="cal-context__icon">{{ ic.glyph('gear', 20) }}</span>
+      <div><h2>Ejemplo</h2><p>Si la nota mínima cambia de 61 a 65 en 2028, los resultados anteriores conservan su política original. Solo los períodos bajo la nueva vigencia usarán 65.</p></div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

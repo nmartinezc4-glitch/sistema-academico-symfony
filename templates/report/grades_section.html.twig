@@ -1,0 +1,298 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set crumbs = [{label: 'Inicio', route: path('app_dashboard')}, {label: 'Reportes', route: path('app_report_index')}, {label: 'Notas por sección'}] %}
+{% block title %}Notas por sección{% endblock %}
+{% block body %}
+{% include 'components/_page_header.html.twig' with {
+  eyebrow: 'Reportes',
+  title: 'Notas por sección',
+  subtitle: 'Comparativo de resultados académicos entre secciones.',
+  quote: '“Los datos también cuentan historias de esfuerzo y grandes logros.”',
+  hero: true
+} %}
+
+{# ── Catálogos de los filtros, calculados antes de filtrar ── #}
+{% set courseOpts = {} %}
+{% for r in rows %}{% set courseOpts = courseOpts|merge({(r.course): r.courseCode}) %}{% endfor %}
+{% set courseNames = courseOpts|keys|sort %}
+{% set allPeriodsH = {} %}
+{% set allCareersH = {} %}
+{% set allSectionsH = {} %}
+{% for r in rows %}
+  {% set allPeriodsH = allPeriodsH|merge({(r.period): true}) %}
+  {% set allCareersH = allCareersH|merge({(r.career): true}) %}
+  {% set allSectionsH = allSectionsH|merge({(r.section): true}) %}
+{% endfor %}
+{% set allPeriods = allPeriodsH|keys|sort %}
+{% set allCareers = allCareersH|keys|sort %}
+{% set allSections = allSectionsH|keys|sort %}
+
+{# ── Filtros (aplicados en la vista sobre los datos del ViewModel) ── #}
+{% set qp = app.request.query %}
+{% set fPeriodo = qp.get('periodo', '') %}
+{% set fCarrera = qp.get('carrera', '') %}
+{% set fCurso = qp.get('curso', '') %}
+{% set fSeccion = qp.get('seccion', '') %}
+{% set rows = rows|filter(r =>
+  (fPeriodo == '' or r.period == fPeriodo)
+  and (fCarrera == '' or r.career == fCarrera)
+  and (fCurso == '' or r.course == fCurso)
+  and (fSeccion == '' or r.section == fSeccion)
+) %}
+
+{# ── Agregados por sección ── #}
+{% set total = rows|length %}
+{% set graded = rows|filter(r => r.grade is not null) %}
+{% set gTotal = graded|length %}
+{% set avg = gTotal ? (graded|reduce((a, r) => a + r.grade, 0) / gTotal) : 0 %}
+{% set sectionsH = {} %}
+{% for r in rows %}{% set sectionsH = sectionsH|merge({(r.section): true}) %}{% endfor %}
+{% set sections = sectionsH|keys|sort %}
+{% set bySection = [] %}
+{% set maxRows = 0 %}
+{% for s in sections %}
+  {% set list = rows|filter(r => r.section == s) %}
+  {% set g = list|filter(r => r.grade is not null) %}
+  {% set n = g|length %}
+  {% set cOk = g|filter(r => r.status == 'APROBADO')|length %}
+  {% set cKo = g|filter(r => r.status == 'REPROBADO')|length %}
+  {% set cPend = (list|length) - n %}
+  {% set sAvg = n ? (g|reduce((a, r) => a + r.grade, 0) / n) : 0 %}
+  {% set pct = n ? (cOk * 100 / n) : 0 %}
+  {% set studH = {} %}
+  {% for lr in list %}{% set studH = studH|merge({(lr.code): true}) %}{% endfor %}
+  {% set students = studH|length %}
+  {% if list|length > maxRows %}{% set maxRows = list|length %}{% endif %}
+  {% set bySection = bySection|merge([{
+    section: s, rows: list|length, students: students, avg: sAvg, ok: cOk, ko: cKo, pend: cPend, pct: pct
+  }]) %}
+{% endfor %}
+{% set scale = maxRows > 0 ? maxRows : 1 %}
+{% set best = null %}
+{% set worst = null %}
+{% for st in bySection %}
+  {% if st.rows and (best == null or st.avg > best.avg) %}{% set best = st %}{% endif %}
+  {% if st.rows and (worst == null or st.avg < worst.avg) %}{% set worst = st %}{% endif %}
+{% endfor %}
+{% set pendRows = rows|filter(r => r.grade is null) %}
+{% set pendH = {} %}
+{% for r in pendRows %}{% set pendH = pendH|merge({(r.code): true}) %}{% endfor %}
+{% set pendingStudents = pendH|length %}
+{% set totalOk = graded|filter(r => r.status == 'APROBADO')|length %}
+{% set totalKo = graded|filter(r => r.status == 'REPROBADO')|length %}
+{% set totalPend = total - gTotal %}
+{% set totalH = {} %}
+{% for r in rows %}{% set totalH = totalH|merge({(r.code): true}) %}{% endfor %}
+{% set totalStudents = totalH|length %}
+{% set totalPct = gTotal ? (totalOk * 100 / gTotal) : 0 %}
+
+<form class="vc-filters" method="get" action="{{ path('app_report_grades_section') }}" aria-label="Filtros del reporte">
+  <div class="field">
+    <label for="f-periodo">{{ ic.calendar(15) }} Período</label>
+    <select id="f-periodo" name="periodo">
+      <option value="">Todos los períodos</option>
+      {% for p in allPeriods %}<option value="{{ p }}" {% if fPeriodo == p %}selected{% endif %}>{{ p }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-carrera">{{ ic.cap(15) }} Carrera</label>
+    <select id="f-carrera" name="carrera">
+      <option value="">Todas las carreras</option>
+      {% for c in allCareers %}<option value="{{ c }}" {% if fCarrera == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-curso">{{ ic.book(15) }} Curso <span style="font-weight:400;color:var(--ink-muted)">(opcional)</span></label>
+    <select id="f-curso" name="curso">
+      <option value="">Todas las materias</option>
+      {% for name in courseNames %}
+        <option value="{{ name }}" {% if fCurso == name %}selected{% endif %}>{{ courseOpts[name] ? courseOpts[name] ~ ' · ' : '' }}{{ name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-seccion">{{ ic.users(15) }} Sección</label>
+    <select id="f-seccion" name="seccion">
+      <option value="">Todas las secciones</option>
+      {% for s in allSections %}<option value="{{ s }}" {% if fSeccion == s %}selected{% endif %}>Sección {{ s }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="vc-filters__actions">
+    <a class="btn btn--ghost" href="{{ path('app_report_grades_section') }}">{{ ic.filter(16) }} Limpiar</a>
+    {% include 'components/_report_export_actions.html.twig' with {report: 'notas-seccion'} %}
+    <button class="btn btn--primary" type="submit">{{ ic.search(16) }} Generar reporte</button>
+  </div>
+</form>
+
+<div class="vc-kpis">
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.users(24), tone: 'info',
+    label: 'Secciones evaluadas', value: bySection|length,
+    caption: sections|length ? 'Secciones ' ~ sections|join(', ') : 'Sin secciones con resultados'
+  } %}
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.trend(24), tone: 'success',
+    label: 'Promedio más alto', value: best ? best.avg|round(1) : '—',
+    caption: best ? 'Sección ' ~ best.section : 'Sin datos'
+  } %}
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.chart(24), tone: 'terracotta',
+    label: 'Promedio más bajo', value: worst ? worst.avg|round(1) : '—',
+    caption: worst ? 'Sección ' ~ worst.section : 'Sin datos'
+  } %}
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.file(24), tone: 'warning',
+    label: 'Estudiantes pendientes', value: pendingStudents,
+    caption: 'Con al menos un resultado sin calificar.'
+  } %}
+</div>
+
+<div class="vc-cols">
+  <section class="vc-panel">
+    <div class="vc-panel__head">
+      <div class="vc-panel__title">
+        {{ ic.layers(20) }}
+        <div>
+          <h2>Comparativo por sección</h2>
+          <p class="vc-panel__sub">Distribución de resultados según estado académico.</p>
+        </div>
+      </div>
+      <div class="vc-legend">
+        <span><span class="dot" style="background:var(--success)"></span>Aprobados</span>
+        <span><span class="dot" style="background:var(--warning)"></span>Pendientes</span>
+        <span><span class="dot" style="background:var(--danger)"></span>Reprobados</span>
+      </div>
+    </div>
+    {% if bySection|length %}
+      <div class="vc-stack">
+        {% for st in bySection %}
+          {% set okH = st.ok * 100 / scale %}
+          {% set pendH = st.pend * 100 / scale %}
+          {% set koH = st.ko * 100 / scale %}
+          {% set okPx = okH * 190 / 100 %}
+          {% set pendPx = pendH * 190 / 100 %}
+          {% set koPx = koH * 190 / 100 %}
+          <div class="vc-stack__group">
+            <div class="vc-stack__col">
+              {% if st.ok %}
+                <div class="vc-stack__seg vc-stack__seg--ok" style="height:{{ okH|round(2) }}%">{% if okPx >= 22 %}{{ st.ok }}{% endif %}</div>
+                {% if okPx < 22 %}<span class="vc-stack__note vc-stack__note--ok" style="--b:{{ (okH / 2)|round(2) }}%">{{ st.ok }}</span>{% endif %}
+              {% endif %}
+              {% if st.pend %}
+                <div class="vc-stack__seg vc-stack__seg--warn" style="height:{{ pendH|round(2) }}%">{% if pendPx >= 22 %}{{ st.pend }}{% endif %}</div>
+                {% if pendPx < 22 %}<span class="vc-stack__note vc-stack__note--warn" style="--b:{{ (okH + pendH / 2)|round(2) }}%">{{ st.pend }}</span>{% endif %}
+              {% endif %}
+              {% if st.ko %}
+                <div class="vc-stack__seg vc-stack__seg--bad" style="height:{{ koH|round(2) }}%">{% if koPx >= 22 %}{{ st.ko }}{% endif %}</div>
+                {% if koPx < 22 %}<span class="vc-stack__note vc-stack__note--bad" style="--b:{{ (okH + pendH + koH / 2)|round(2) }}%">{{ st.ko }}</span>{% endif %}
+              {% endif %}
+            </div>
+            <span class="vc-chart__label">Sección {{ st.section }}<small>(n = {{ st.rows }})</small></span>
+          </div>
+        {% endfor %}
+      </div>
+      <p class="vc-chart__axis">Eje vertical: resultados (máx. {{ scale }} por sección)</p>
+      <p class="vc-panel__foot">Los segmentos cuentan resultados (calificaciones), no estudiantes únicos: cada estudiante tiene varios resultados por sección.</p>
+    {% else %}
+      {% include 'components/_empty_state.html.twig' with {title: 'Sin resultados', message: 'No hay información para los filtros seleccionados.'} %}
+    {% endif %}
+  </section>
+
+  <section class="vc-panel">
+    <div class="vc-panel__head">
+      <div class="vc-panel__title">
+        {{ ic.pie(20) }}
+        <div>
+          <h2>Porcentaje de aprobación por sección</h2>
+          <p class="vc-panel__sub">Comparación del rendimiento académico.</p>
+        </div>
+      </div>
+    </div>
+    {% if bySection|length %}
+      <div class="vc-chart">
+        {% for st in bySection %}
+          <div class="vc-chart__group">
+            <div class="vc-chart__bars">
+              <div class="vc-col">
+                <span class="vc-col__val">{{ st.pct|round(1) }} %</span>
+                <span class="vc-col__bar" style="height:{{ st.pct|round }}%;background:var(--success)"></span>
+              </div>
+            </div>
+            <span class="vc-chart__label">Sección {{ st.section }}<small>{{ st.ok }} de {{ st.ok + st.ko + st.pend }}</small></span>
+          </div>
+        {% endfor %}
+      </div>
+      <p class="vc-chart__axis">Eje vertical: porcentaje (0–100 %)</p>
+      <p class="vc-panel__foot">La tasa se calcula sobre resultados calificados de cada sección.</p>
+    {% else %}
+      {% include 'components/_empty_state.html.twig' with {title: 'Sin resultados', message: 'No hay información para los filtros seleccionados.'} %}
+    {% endif %}
+  </section>
+</div>
+
+<section class="vc-panel">
+  <div class="vc-panel__head">
+    <div class="vc-panel__title">
+      {{ ic.table(20) }}
+      <div>
+        <h2>Detalle por sección</h2>
+        <p class="vc-panel__sub">Resultados desglosados por sección.</p>
+      </div>
+    </div>
+    <div class="vc-panel__tools">
+      <a class="btn btn--secondary" href="{{ path('app_report_export_xlsx', ({report: 'notas-seccion'}|merge(app.request.query.all))) }}">{{ ic.download(16) }} Descargar Excel</a>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th scope="col">Sección</th>
+          <th scope="col">Estudiantes</th>
+          <th scope="col">Promedio</th>
+          <th scope="col">Aprobados</th>
+          <th scope="col">Reprobados</th>
+          <th scope="col">Pendientes</th>
+          <th scope="col">% Aprobación</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for st in bySection %}
+          <tr>
+            <td><strong>Sección {{ st.section }}</strong></td>
+            <td class="vc-num">{{ st.students }}</td>
+            <td class="vc-num">{{ st.avg|round(1) }}</td>
+            <td class="vc-num vc-val--ok">{{ st.ok }}</td>
+            <td class="vc-num vc-val--bad">{{ st.ko }}</td>
+            <td class="vc-num vc-val--warn">{{ st.pend }}</td>
+            <td>
+              <div class="vc-cellbar">
+                <span class="vc-hbar__track"><span class="vc-hbar__fill" style="width:{{ st.pct|round }}%"></span></span>
+                <b>{{ st.pct|round(1) }} %</b>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7">{% include 'components/_empty_state.html.twig' with {title: 'Sin resultados', message: 'No hay información para los filtros seleccionados.'} %}</td></tr>
+        {% endfor %}
+        <tr>
+          <td><strong>Total</strong></td>
+          <td class="vc-num"><strong>{{ totalStudents }}</strong></td>
+          <td class="vc-num"><strong>{{ avg|round(1) }}</strong></td>
+          <td class="vc-num vc-val--ok">{{ totalOk }}</td>
+          <td class="vc-num vc-val--bad">{{ totalKo }}</td>
+          <td class="vc-num vc-val--warn">{{ totalPend }}</td>
+          <td>
+            <div class="vc-cellbar">
+              <span class="vc-hbar__track"><span class="vc-hbar__fill" style="width:{{ totalPct|round }}%"></span></span>
+              <b>{{ totalPct|round(1) }} %</b>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="vc-panel__foot">«Aprobados / Reprobados / Pendientes» cuentan resultados; «Estudiantes» cuenta personas únicas.</p>
+</section>
+
+{% endblock %}

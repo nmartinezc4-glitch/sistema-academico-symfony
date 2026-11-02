@@ -1,0 +1,154 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: 'Gestión académica'},
+  {label: 'Ofertas'}
+] %}
+{% block title %}Ofertas académicas · Sistema Académico{% endblock %}
+
+{% block body %}
+<div class="va-page am-page">
+  {% include 'components/_page_header.html.twig' with {
+    hero: true,
+    title: 'Ofertas académicas',
+    subtitle: 'Define qué cursos de un pensum se imparten en cada período y sección.',
+    quote: '“La oferta conecta el plan de estudios con la operación académica real.”',
+    primaryAction: is_granted('ROLE_COORDINACION') ? {
+      label: 'Nueva oferta',
+      route: path('app_offering_new')
+    } : null
+  } %}
+
+  <div class="grid-metrics am-metrics">
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.glyph('bookmark', 22),
+      tone: 'terracotta',
+      label: 'Ofertas',
+      value: metrics.total,
+      caption: 'registros académicos'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.glyph('check', 22),
+      tone: 'success',
+      label: 'Activas',
+      value: metrics.active,
+      caption: 'habilitadas para resultados'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.glyph('calendar', 22),
+      tone: 'success',
+      label: 'En período abierto',
+      value: metrics.openPeriod,
+      caption: 'potencialmente calificables'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.glyph('users', 22),
+      tone: 'warning',
+      label: 'Secciones',
+      value: metrics.sections,
+      caption: 'con oferta registrada'
+    } %}
+  </div>
+
+  <section class="card am-filters">
+    <div class="am-filters__head">
+      <div>
+        <h2>{{ ic.glyph('search', 18) }}<span>Buscar ofertas</span></h2>
+        <p>{{ items|length }} resultado{{ items|length == 1 ? '' : 's' }} con los filtros actuales.</p>
+      </div>
+    </div>
+
+    <form method="get" class="am-filters__grid">
+      <div class="field am-filters__q">
+        <label for="q">Curso, pensum o carrera</label>
+        <div class="icon-input">
+          {{ ic.glyph('search', 16) }}
+          <input id="q" name="q" value="{{ q }}" placeholder="Ej. MAT-101, Computación o BCL-2025">
+        </div>
+      </div>
+      <div class="field">
+        <label for="period">Período</label>
+        <select id="period" name="period">
+          <option value="">Todos los períodos</option>
+          {% for p in periods %}
+            <option value="{{ p.id }}" {% if periodId == p.id %}selected{% endif %}>{{ p.label }} · {{ status_label(p.status) }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="section">Sección</label>
+        <select id="section" name="section">
+          <option value="">Todas las secciones</option>
+          {% for s in sections %}
+            <option value="{{ s.id }}" {% if sectionId == s.id %}selected{% endif %}>{{ s.code }} · {{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="status">Estado</label>
+        <select id="status" name="status">
+          <option value="all" {% if status == 'all' %}selected{% endif %}>Todos</option>
+          <option value="active" {% if status == 'active' %}selected{% endif %}>Activas</option>
+          <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactivas</option>
+        </select>
+      </div>
+      <div class="am-filters__actions">
+        <a class="btn btn--ghost" href="{{ path('app_offering_index') }}">Limpiar</a>
+        <button class="btn btn--primary" type="submit">{{ ic.glyph('filter', 15) }}<span>Aplicar filtros</span></button>
+      </div>
+    </form>
+  </section>
+
+  <section class="am-results">
+    <div class="am-section-head">
+      <div>
+        <p class="am-eyebrow">Operación académica</p>
+        <h2>Directorio de ofertas</h2>
+        <p>Cada fila representa período + curso del pensum + sección.</p>
+      </div>
+      {% if is_granted('ROLE_COORDINACION') %}
+        <a class="btn btn--primary" href="{{ path('app_offering_new') }}">{{ ic.glyph('plus', 15) }}<span>Nueva oferta</span></a>
+      {% endif %}
+    </div>
+
+    <div class="table-wrap am-table">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Período</th>
+            <th>Curso</th>
+            <th>Pensum / carrera</th>
+            <th>Ciclo</th>
+            <th>Sección</th>
+            <th>Estado período</th>
+            <th>Oferta</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in items %}
+            <tr>
+              <td><strong>{{ row.period }}</strong></td>
+              <td><strong>{{ row.courseCode }}</strong><small>{{ row.courseName }}</small></td>
+              <td><strong>{{ row.curriculumCode }}</strong><small>{{ row.career }}</small></td>
+              <td>{{ row.cycle }}</td>
+              <td><span class="am-section-chip">{{ row.section }}</span></td>
+              <td>{% include 'components/_status_badge.html.twig' with {status: row.periodStatus} %}</td>
+              <td>{% include 'components/_status_badge.html.twig' with {status: row.status} %}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="7">
+                {% include 'components/_empty_state.html.twig' with {
+                  title: 'Sin ofertas académicas',
+                  message: 'Crea una oferta para relacionar período, curso de pensum y sección.'
+                } %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

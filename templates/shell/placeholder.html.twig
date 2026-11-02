@@ -1,0 +1,39 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set crumbs = [{label: 'Inicio', route: path('app_dashboard')}, {label: title}] %}
+{% block title %}{{ title }}{% endblock %}
+{% block body %}
+<div class="vb-page vb-page--placeholder">
+
+  {% include 'components/_page_header.html.twig' with {
+    eyebrow: 'Módulo',
+    title: title,
+    subtitle: message,
+    quote: '“Construir bien también es esperar el momento correcto.”',
+    hero: true
+  } %}
+
+  <div class="vb-catbar">
+    <div class="vb-chips" role="group" aria-label="Estado del módulo">
+      <span class="chip chip--active">{{ ic.glyph('folder', 14) }} {{ title }}</span>
+      <span class="chip">{{ ic.glyph('clock', 14) }} Disponible en V2</span>
+    </div>
+    <span class="vb-uionly">Módulo en construcción</span>
+  </div>
+
+  <section class="card">
+    <div class="vb-panel__head">
+      <div>
+        <h2 class="vb-panel__title">{{ ic.glyph('folder', 20) }}<span>{{ title }}</span></h2>
+        <p class="vb-panel__sub">La navegación y el shell están definidos; los datos se conectan en la fase Doctrine.</p>
+      </div>
+      <div class="vb-panel__tools">
+        <span class="chip">{{ ic.glyph('database', 14) }} Sin fuente de datos</span>
+      </div>
+    </div>
+    {% include 'components/_empty_state.html.twig' with {title: 'Disponible en V2', message: 'Este módulo se conectará al modelo de datos en la fase Doctrine. La navegación y el shell ya están definidos.'} %}
+  </section>
+
+  <p class="vb-note">Mientras el módulo no esté conectado, la pantalla conserva su cabecera editorial, su tipografía y sus estados vacíos para que la estructura visual no cambie al llegar los datos.</p>
+</div>
+{% endblock %}

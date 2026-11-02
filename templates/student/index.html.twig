@@ -1,0 +1,302 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: 'Estudiantes', route: path('app_student_index')},
+  {label: 'Alumnos'}
+] %}
+{% block title %}Alumnos · Sistema Académico{% endblock %}
+
+{% block body %}
+<div class="va-page va-page--students">
+
+{% set canManageStudents = is_granted('ROLE_COORDINACION') %}
+{% include 'components/_page_header.html.twig' with {
+  hero: true,
+  title: 'Alumnos',
+  subtitle: canManageStudents
+    ? 'Consulta y administra la información de los estudiantes.'
+    : 'Consulta la información académica de los estudiantes.',
+  quote: '“Cada estudiante es una historia en construcción.”',
+  primaryAction: canManageStudents ? {route: path('app_student_new'), label: '＋ Registrar estudiante'} : null
+} %}
+
+<div class="grid-metrics va-kpis va-students-kpis">
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.glyph('users', 24),
+    tone: 'success',
+    label: 'Estudiantes totales',
+    value: metrics.total,
+    caption: metrics.active ~ ' activos · ' ~ metrics.inactive ~ ' inactivos'
+  } %}
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.glyph('cap', 24),
+    tone: 'terracotta',
+    label: 'Carreras',
+    value: careers|length,
+    caption: curricula|length ~ ' pensums vigentes'
+  } %}
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.glyph('book', 24),
+    tone: 'terracotta',
+    label: 'Resultados registrados',
+    value: resultsCount,
+    caption: 'Historial académico certificado'
+  } %}
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.glyph('trend', 24),
+    tone: 'warning',
+    label: 'Promedio de avance',
+    value: metrics.avgProgress|number_format(0),
+    suffix: '%',
+    caption: 'de estudiantes activos'
+  } %}
+</div>
+
+{% set hasProgressFilter = progressMin > 0 or progressMax < 100 %}
+{% set hasFilters = q or career or curriculum or status or entryYear or hasProgressFilter %}
+
+<section class="card va-filters va-filters--horizontal" aria-labelledby="student-filter-title">
+  <div class="va-filters__head">
+    <div>
+      <h2 id="student-filter-title" class="va-filters__title">
+        {{ ic.glyph('filter', 17) }}
+        <span>Filtros de alumnos</span>
+      </h2>
+      <p class="va-filters__caption">{{ filteredTotal }} resultado{{ filteredTotal == 1 ? '' : 's' }} en la selección actual</p>
+    </div>
+    {% if hasFilters %}
+      <a class="va-link" href="{{ path('app_student_index', {per_page: pager.perPage}) }}">Limpiar filtros</a>
+    {% endif %}
+  </div>
+
+  <form class="va-filter-grid" method="get">
+    <div class="field va-filter-field va-filter-field--search">
+      <label for="q">Buscar estudiante</label>
+      <div class="icon-input">
+        {{ ic.glyph('search', 16) }}
+        <input id="q" name="q" value="{{ q }}" placeholder="Nombre o código…" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="field va-filter-field va-filter-field--career">
+      <label for="career">Carrera</label>
+      <select id="career" name="career">
+        <option value="">Todas las carreras</option>
+        {% for c in careers %}
+          <option value="{{ c.id }}" {% if career == c.id ~ '' %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field va-filter-field va-filter-field--curriculum">
+      <label for="curriculum">Pensum</label>
+      <select id="curriculum" name="curriculum">
+        <option value="">Todos los pensums</option>
+        {% for p in curricula %}
+          <option value="{{ p.id }}" {% if curriculum == p.id ~ '' %}selected{% endif %}>{{ p.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field va-filter-field va-filter-field--status">
+      <label for="status">Estado</label>
+      <select id="status" name="status">
+        <option value="">Todos los estados</option>
+        {% for item in statuses %}
+          <option value="{{ item }}" {% if status == item %}selected{% endif %}>{{ status_label(item) }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field va-filter-field va-filter-field--year">
+      <label for="entry_year">Año de ingreso</label>
+      <select id="entry_year" name="entry_year">
+        <option value="">Todos los años</option>
+        {% for year in entryYears %}
+          <option value="{{ year }}" {% if entryYear == year %}selected{% endif %}>{{ year }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field va-filter-field va-filter-field--range">
+      <label>Rango de avance</label>
+      <div
+        class="va-range va-range--horizontal"
+        data-controller="student-range"
+        style="--range-min: {{ progressMin }}%; --range-max: {{ progressMax }}%;"
+      >
+        <div class="va-range__track" aria-hidden="true"></div>
+        <input
+          class="va-range__input va-range__input--min"
+          type="range"
+          name="progress_min"
+          min="0"
+          max="100"
+          step="1"
+          value="{{ progressMin }}"
+          aria-label="Avance mínimo"
+          data-student-range-target="min"
+          data-action="input->student-range#update"
+        >
+        <input
+          class="va-range__input va-range__input--max"
+          type="range"
+          name="progress_max"
+          min="0"
+          max="100"
+          step="1"
+          value="{{ progressMax }}"
+          aria-label="Avance máximo"
+          data-student-range-target="max"
+          data-action="input->student-range#update"
+        >
+        <output class="va-range__output" data-student-range-target="output">{{ progressMin }} % – {{ progressMax }} %</output>
+      </div>
+    </div>
+
+    <div class="field va-filter-field va-filter-field--order">
+      <label for="orden">Ordenar por</label>
+      <select id="orden" name="orden">
+        <option value="apellidos-asc" {% if order == 'apellidos-asc' %}selected{% endif %}>Apellidos (A–Z)</option>
+        <option value="apellidos-desc" {% if order == 'apellidos-desc' %}selected{% endif %}>Apellidos (Z–A)</option>
+        <option value="nombre-asc" {% if order == 'nombre-asc' %}selected{% endif %}>Nombres (A–Z)</option>
+        <option value="avance-desc" {% if order == 'avance-desc' %}selected{% endif %}>Avance (mayor primero)</option>
+        <option value="avance-asc" {% if order == 'avance-asc' %}selected{% endif %}>Avance (menor primero)</option>
+        <option value="codigo-asc" {% if order == 'codigo-asc' %}selected{% endif %}>Código</option>
+      </select>
+    </div>
+
+    <div class="field va-filter-field va-filter-field--page-size">
+      <label for="per_page">Por página</label>
+      <select id="per_page" name="per_page">
+        {% for pp in constant('App\\Ui\\Paginator::ALLOWED_PER_PAGE') %}
+          <option value="{{ pp }}" {% if pager.perPage == pp %}selected{% endif %}>{{ pp }} estudiantes</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="va-filter-actions">
+      <a class="btn btn--ghost" href="{{ path('app_student_index', {per_page: pager.perPage}) }}">Limpiar</a>
+      <button class="btn btn--primary" type="submit">{{ ic.glyph('filter', 15) }} Aplicar filtros</button>
+    </div>
+  </form>
+
+  {% if hasFilters %}
+    <div class="va-filter-chips" role="status" aria-label="Filtros activos">
+      {% if q %}<span class="chip">Búsqueda: {{ q }}</span>{% endif %}
+      {% if career %}
+        {% for c in careers %}
+          {% if (c.id ~ '') == career %}<span class="chip">Carrera: {{ c.name }}</span>{% endif %}
+        {% endfor %}
+      {% endif %}
+      {% if curriculum %}
+        {% for p in curricula %}
+          {% if (p.id ~ '') == curriculum %}<span class="chip">Pensum: {{ p.name }}</span>{% endif %}
+        {% endfor %}
+      {% endif %}
+      {% if status %}<span class="chip">Estado: {{ status_label(status) }}</span>{% endif %}
+      {% if entryYear %}<span class="chip">Ingreso: {{ entryYear }}</span>{% endif %}
+      {% if hasProgressFilter %}<span class="chip">Avance: {{ progressMin }}%–{{ progressMax }}%</span>{% endif %}
+    </div>
+  {% endif %}
+</section>
+
+<section class="va-students-main" aria-labelledby="student-list-title">
+  <div class="va-toolbar va-toolbar--students">
+    <div class="va-toolbar__primary">
+      <h2 id="student-list-title" class="va-toolbar__title">Listado de estudiantes</h2>
+      <span class="va-toolbar__meta">{{ filteredTotal }} de {{ total }} estudiantes</span>
+    </div>
+    <div class="va-toolbar__actions">
+      {% include 'components/_tabs.html.twig' with {
+        al: 'Vistas de alumnos',
+        items: [
+          {url: path('app_student_index', app.request.query.all), label: 'Listado', icon: 'list', active: true},
+          {label: 'Vista de tarjetas', icon: 'table', disabled: true}
+        ]
+      } %}
+      <a class="btn btn--secondary" href="{{ path('app_student_export_xlsx', app.request.query.all) }}" title="Exportar el listado actual a XLSX">
+        {{ ic.glyph('download', 16) }}<span>Exportar</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="table-wrap va-students-table">
+    <table class="data">
+      <thead>
+        <tr>
+          <th scope="col"><input type="checkbox" aria-label="Seleccionar todos"></th>
+          <th scope="col">Estudiante</th>
+          <th scope="col">Código</th>
+          <th scope="col">Carrera</th>
+          <th scope="col">Pensum</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Avance</th>
+          <th scope="col">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for s in items %}
+        <tr>
+          <td><input type="checkbox" aria-label="Seleccionar {{ s.fullName }}"></td>
+          <td>
+            <div class="va-student-cell">
+              {% if s.photoPath %}
+                <span class="avatar va-avatar--row"><img src="{{ s.photoPath }}" alt=""></span>
+              {% else %}
+                <span class="avatar va-avatar--row" aria-hidden="true">{{ s.firstNames|slice(0, 1) ~ s.lastNames|slice(0, 1) }}</span>
+              {% endif %}
+              <span class="va-student-cell__identity">
+                <a href="{{ path('app_student_show', {id: s.id}) }}"><strong>{{ s.fullName }}</strong></a>
+                <small>{{ s.birthDate|date('d M Y') }}</small>
+              </span>
+            </div>
+          </td>
+          <td><span class="va-code">{{ s.code }}</span></td>
+          <td>{{ s.career|default('Sin carrera') }}</td>
+          <td>{{ s.curriculum|default('Sin pensum') }}</td>
+          <td>{% include 'components/_status_badge.html.twig' with {status: s.status} %}</td>
+          <td>
+            <div class="va-row-progress">
+              {% include 'components/_progress.html.twig' with {value: s.progress|round, showValue: false} %}
+              <strong class="va-row-progress__value">{{ s.progress|round }} %</strong>
+            </div>
+          </td>
+          <td>
+            <div class="va-row-actions">
+              <a href="{{ path('app_student_show', {id: s.id}) }}" aria-label="Ver perfil de {{ s.fullName }}" title="Ver perfil">{{ ic.glyph('eye', 16) }}</a>
+              {% if canManageStudents %}
+                <a href="{{ path('app_student_edit', {id: s.id}) }}" aria-label="Editar {{ s.fullName }}" title="Editar ficha">{{ ic.glyph('pencil', 16) }}</a>
+              {% endif %}
+              <a href="{{ path('app_transcript_show', {id: s.id}) }}" aria-label="Expediente de {{ s.fullName }}" title="Ver expediente">{{ ic.glyph('file', 16) }}</a>
+            </div>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="8">
+            {% include 'components/_empty_state.html.twig' with {
+              title: 'No encontramos estudiantes',
+              message: 'Ajusta los filtros o registra un nuevo estudiante.'
+            } %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include 'components/_pagination.html.twig' with {
+    page: pager.page,
+    pages: pager.pages,
+    total: filteredTotal,
+    range: pager.range,
+    perPage: pager.perPage,
+    label: 'estudiantes',
+    showPerPage: false
+  } %}
+</section>
+
+</div>
+{% endblock %}

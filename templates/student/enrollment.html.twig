@@ -1,0 +1,129 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set f = form|default({}) %}
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: 'Alumnos', route: path('app_student_index')},
+  {label: vm.fullName, route: path('app_student_show', {id: vm.id})},
+  {label: 'Gestionar inscripción'}
+] %}
+{% block title %}Inscripción · {{ vm.fullName }}{% endblock %}
+
+{% block body %}
+<div class="va-page am-page">
+  <header class="page-header page-header--hero am-hero">
+    <div class="page-header__main">
+      <p class="am-eyebrow">Gestión académica</p>
+      <h1>Gestionar inscripción</h1>
+      <p class="subtitle">{{ vm.fullName }} · {{ vm.code }}</p>
+      <blockquote class="page-header__quote">“La inscripción ubica al estudiante en un período, ciclo y sección concretos.”</blockquote>
+    </div>
+    <div class="page-header__action">
+      <a class="btn btn--secondary" href="{{ path('app_student_show', {id: vm.id}) }}">{{ ic.glyph('arrowLeft', 16) }}<span>Volver al perfil</span></a>
+    </div>
+  </header>
+
+  <section class="card am-student-context">
+    <div>
+      <p class="am-eyebrow">Programa activo</p>
+      <h2>{{ vm.fullName }}</h2>
+      <p>{{ vm.career }} · {{ vm.curriculum }}</p>
+    </div>
+    <dl>
+      <div><dt>Carné</dt><dd>{{ vm.code }}</dd></div>
+      <div><dt>Pensum</dt><dd>{{ vm.curriculum }}</dd></div>
+      <div><dt>Estado programa</dt><dd>{% include 'components/_status_badge.html.twig' with {status: program.status} %}</dd></div>
+    </dl>
+  </section>
+
+  <div class="am-enrollment-layout">
+    <form method="post" class="card am-form" novalidate>
+      <input type="hidden" name="_token" value="{{ csrf_token('app_student_enrollment') }}">
+      {% if errors|length %}
+        <div class="notice notice--danger">
+          <strong>No fue posible registrar la inscripción:</strong>
+          <ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        </div>
+      {% endif %}
+
+      <div class="am-form__head">
+        <span class="am-form__number">01</span>
+        <div>
+          <h2>Nueva inscripción académica</h2>
+          <p>Un estudiante solo puede tener una inscripción por programa y período.</p>
+        </div>
+      </div>
+
+      <div class="am-form__grid">
+        <div class="field">
+          <label for="periodId">Período *</label>
+          <select id="periodId" name="periodId" required>
+            <option value="">Selecciona un período…</option>
+            {% for p in availablePeriods %}
+              <option value="{{ p.id }}" {% if f.periodId == p.id ~ '' %}selected{% endif %}>{{ p.label }} · {{ status_label(p.status) }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="cycleId">Ciclo curricular *</label>
+          <select id="cycleId" name="cycleId" required>
+            <option value="">Selecciona un ciclo…</option>
+            {% for c in cycles %}
+              <option value="{{ c.id }}" {% if f.cycleId == c.id ~ '' %}selected{% endif %}>{{ c.label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="sectionId">Sección *</label>
+          <select id="sectionId" name="sectionId" required>
+            <option value="">Selecciona una sección…</option>
+            {% for s in sections %}
+              <option value="{{ s.id }}" {% if f.sectionId == s.id ~ '' %}selected{% endif %}>{{ s.code }} · {{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="notice notice--info am-form__note">
+        {{ ic.glyph('info', 16) }}
+        <div>
+          <strong>Relación con las ofertas</strong>
+          <p>La inscripción puede crearse antes de publicar ofertas. Para ingresar notas deben existir ofertas activas del mismo período, pensum y sección.</p>
+        </div>
+      </div>
+
+      <div class="am-form__actions">
+        <a class="btn btn--secondary" href="{{ path('app_student_show', {id: vm.id}) }}">Cancelar</a>
+        <button class="btn btn--primary" type="submit">{{ ic.glyph('check', 16) }}<span>Registrar inscripción</span></button>
+      </div>
+    </form>
+
+    <aside class="card am-history-card">
+      <div class="am-history-card__head">
+        <h2>{{ ic.glyph('calendar', 18) }}<span>Trayectoria registrada</span></h2>
+        <p>{{ periods|length }} período{{ periods|length == 1 ? '' : 's' }}.</p>
+      </div>
+
+      <ol class="am-history-list">
+        {% for p in periods %}
+          <li>
+            <span class="am-history-list__node">{{ ic.glyph('check', 11) }}</span>
+            <div>
+              <div class="am-history-list__title">
+                <strong>{{ p.periodLabel }}</strong>
+                {% include 'components/_status_badge.html.twig' with {status: p.enrollmentStatus} %}
+              </div>
+              <span>{{ p.cycle }} · Sección {{ p.section }}</span>
+              <small>{{ status_label(p.periodStatus) }}</small>
+            </div>
+          </li>
+        {% else %}
+          <li class="am-history-list__empty">Este será el primer período del estudiante.</li>
+        {% endfor %}
+      </ol>
+    </aside>
+  </div>
+</div>
+{% endblock %}

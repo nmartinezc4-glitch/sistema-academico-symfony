@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Acceso · Sistema Académico{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  {{ importmap('app') }}
+</head>
+<body>
+  <a class="skip-link" href="#main">Saltar al contenido</a>
+  <main id="main" tabindex="-1">{% block body %}{% endblock %}</main>
+</body>
+</html>

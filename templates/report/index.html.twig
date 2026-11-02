@@ -1,0 +1,116 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set crumbs = [{label: 'Inicio', route: path('app_dashboard')}, {label: 'Reportes'}] %}
+{% set reportIcons = {
+  'app_report_students_career': 'users',
+  'app_report_grades_career': 'chart',
+  'app_report_grades_course': 'book',
+  'app_report_grades_section': 'layers',
+  'app_report_progress_student': 'target',
+  'app_report_progress_cycle': 'trend',
+  'app_report_pending_repeats': 'clock'
+} %}
+{% set teacherRoutes = [
+  'app_report_grades_course',
+  'app_report_grades_section',
+  'app_report_progress_student',
+  'app_report_pending_repeats'
+] %}
+{% set managementRoutes = [
+  'app_report_students_career',
+  'app_report_grades_career',
+  'app_report_progress_cycle'
+] %}
+{% block title %}Centro de reportes{% endblock %}
+{% block body %}
+{% include 'components/_page_header.html.twig' with {
+  eyebrow: 'Análisis',
+  title: 'Centro de reportes',
+  subtitle: 'Elige la consulta según la decisión que necesitas tomar.',
+  quote: '“Los datos también construyen historias de oportunidades.”',
+  hero: true
+} %}
+
+<div class="vc-kpis">
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.users(24), tone: 'info',
+    label: 'Estudiantes registrados', value: metrics.students,
+    caption: metrics.activePrograms ~ ' programas activos'
+  } %}
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.chart(24), tone: 'terracotta',
+    label: 'Reportes disponibles', value: catalog|length,
+    caption: 'Consultas listas para usar'
+  } %}
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.book(24), tone: 'success',
+    label: 'Resultados registrados', value: metrics.results,
+    caption: 'Historial académico disponible'
+  } %}
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.calendar(24), tone: 'warning',
+    label: 'Períodos abiertos', value: metrics.openPeriods,
+    caption: 'Admiten operación académica'
+  } %}
+</div>
+
+<div class="notice notice--info" role="note">
+  {{ ic.info(17) }}
+  <span>Los filtros aparecen dentro de cada reporte y la descarga en Excel conserva exactamente la selección aplicada.</span>
+</div>
+
+<section class="vc-report-audience">
+  <div class="vc-panel__head">
+    <div class="vc-panel__title">
+      {{ ic.book(20) }}
+      <div>
+        <h2>Para seguimiento docente</h2>
+        <p class="vc-panel__sub">Calificaciones, secciones, avance individual y estudiantes que requieren acompañamiento.</p>
+      </div>
+    </div>
+  </div>
+  <div class="vc-cards">
+    {% for item in catalog|filter(r => r.route in teacherRoutes) %}
+      <article class="vc-rcard">
+        <div class="vc-rcard__head">
+          <span class="vc-rcard__icon" aria-hidden="true">{{ ic.glyph(reportIcons[item.route]|default('file'), 20) }}</span>
+        </div>
+        <span class="badge badge--info">{{ item.badge }}</span>
+        <h3><a href="{{ path(item.route) }}">{{ item.title }}</a></h3>
+        <p>{{ item.description }}</p>
+        <div class="vc-rcard__foot">
+          <a class="btn btn--secondary" href="{{ path(item.route) }}">{{ ic.eye(16) }} Abrir reporte</a>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="vc-report-audience" style="margin-top:var(--space-7)">
+  <div class="vc-panel__head">
+    <div class="vc-panel__title">
+      {{ ic.chart(20) }}
+      <div>
+        <h2>Para dirección y coordinación</h2>
+        <p class="vc-panel__sub">Matrícula, desempeño comparativo y cumplimiento curricular para decisiones académicas.</p>
+      </div>
+    </div>
+  </div>
+  <div class="vc-cards">
+    {% for item in catalog|filter(r => r.route in managementRoutes) %}
+      <article class="vc-rcard">
+        <div class="vc-rcard__head">
+          <span class="vc-rcard__icon" aria-hidden="true">{{ ic.glyph(reportIcons[item.route]|default('file'), 20) }}</span>
+        </div>
+        <span class="badge badge--info">{{ item.badge }}</span>
+        <h3><a href="{{ path(item.route) }}">{{ item.title }}</a></h3>
+        <p>{{ item.description }}</p>
+        <div class="vc-rcard__foot">
+          <a class="btn btn--secondary" href="{{ path(item.route) }}">{{ ic.eye(16) }} Abrir reporte</a>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
+{% endblock %}

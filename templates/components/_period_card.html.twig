@@ -1,0 +1,7 @@
+<div class="period-card">
+  <strong>{{ periodLabel }}</strong> · {{ cycle }} · Sección {{ section }}
+  <div style="margin-top:4px">
+    {% include 'components/_status_badge.html.twig' with {status: enrollmentStatus} %}
+    {% include 'components/_status_badge.html.twig' with {status: periodStatus} %}
+  </div>
+</div>

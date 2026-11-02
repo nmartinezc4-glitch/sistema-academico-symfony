@@ -1,0 +1,14 @@
+<div class="metric-card">
+  {% if icon is defined %}<div class="metric-card__icon metric-card__icon--{{ tone|default('terracotta') }}" aria-hidden="true">{{ icon|raw }}</div>{% endif %}
+  <div class="metric-card__body">
+    <div class="metric-card__value">{{ value }}{% if suffix is defined %}<span class="metric-card__suffix">{{ suffix }}</span>{% endif %}</div>
+    <div class="metric-card__label">{{ label }}</div>
+    {% if caption is defined %}<div class="metric-card__caption">{{ caption }}</div>{% endif %}
+    {% if progress is defined %}
+      <div class="progress" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100" style="margin-top:12px">
+        <span class="progress__bar" style="width: {{ progress > 100 ? 100 : (progress < 0 ? 0 : progress) }}%"></span>
+      </div>
+    {% endif %}
+    {% if trend is defined %}<div class="metric-card__trend">{{ trend }}</div>{% endif %}
+  </div>
+</div>

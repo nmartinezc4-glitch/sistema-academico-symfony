@@ -1,0 +1,23 @@
+{% import 'components/_icons.html.twig' as ic %}
+{#
+  Estos botones pertenecen al mismo formulario GET que contiene los filtros.
+  Usar formaction hace que Vista previa y Excel reciban exactamente los valores
+  actualmente seleccionados, incluso antes de pulsar «Generar reporte».
+#}
+<button
+  class="btn btn--secondary"
+  type="submit"
+  formmethod="get"
+  formaction="{{ path('app_report_preview', {report: report}) }}"
+  formtarget="_blank"
+>
+  {{ ic.file(16) }} Vista previa PDF
+</button>
+<button
+  class="btn btn--secondary"
+  type="submit"
+  formmethod="get"
+  formaction="{{ path('app_report_export_xlsx', {report: report}) }}"
+>
+  {{ ic.download(16) }} Excel
+</button>

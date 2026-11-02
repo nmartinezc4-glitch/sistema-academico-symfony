@@ -1,0 +1,30 @@
+{#-
+  Combobox con autocompletado (Stimulus `combobox`) para filtros GET.
+  Uso:
+    {% import 'components/_combobox.html.twig' as cb %}
+    {{ cb.field({
+      id: 'f-career', name: 'career', label: 'Carrera', icon: ic.cap(15),
+      value: filters.career, options: options.careers,   {# [{value,label,hint}] #}
+      allLabel: 'Todas las carreras', placeholder: 'Buscar carrera…',
+    }) }}
+-#}
+{% macro field(opts) %}
+{% set id = opts.id %}
+{% set options = [] %}
+{% if opts.allLabel is defined and opts.allLabel %}
+  {% set options = options|merge([{value: '', label: opts.allLabel, hint: ''}]) %}
+{% endif %}
+{% set options = options|merge(opts.options) %}
+<div class="combobox field{% if opts.class is defined %} {{ opts.class }}{% endif %}" data-controller="combobox" data-combobox-options-value="{{ options|json_encode }}">
+  <label class="field__label" for="{{ id }}">{{ opts.icon|default('')|raw }} {{ opts.label }}</label>
+  <div class="combobox__control">
+    <input type="hidden" name="{{ opts.name }}" value="{{ opts.value|default('') }}" data-combobox-target="hidden">
+    <input type="text" class="combobox__input" id="{{ id }}" role="combobox" autocomplete="off" spellcheck="false"
+           placeholder="{{ opts.placeholder|default('Buscar…') }}"
+           aria-expanded="false" aria-controls="{{ id }}-list" aria-autocomplete="list" aria-haspopup="listbox"
+           data-combobox-target="input">
+    <button type="button" class="combobox__clear" data-combobox-target="clear" aria-label="Limpiar filtro" hidden>×</button>
+    <ul class="combobox__list" id="{{ id }}-list" role="listbox" aria-label="{{ opts.label }}" data-combobox-target="list" hidden></ul>
+  </div>
+</div>
+{% endmacro %}

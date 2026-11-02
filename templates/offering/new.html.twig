@@ -1,0 +1,97 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set f = form|default({}) %}
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: 'Gestión académica'},
+  {label: 'Ofertas', route: path('app_offering_index')},
+  {label: 'Nueva oferta'}
+] %}
+{% block title %}Nueva oferta · Sistema Académico{% endblock %}
+
+{% block body %}
+<div class="va-page am-page">
+  <header class="page-header page-header--hero am-hero">
+    <div class="page-header__main">
+      <p class="am-eyebrow">Gestión académica</p>
+      <h1>Nueva oferta académica</h1>
+      <p class="subtitle">Publica un curso de un pensum para un período y una sección concretos.</p>
+      <blockquote class="page-header__quote">“Sin oferta no existe una instancia real del curso que pueda calificarse.”</blockquote>
+    </div>
+    <div class="page-header__action">
+      <a class="btn btn--secondary" href="{{ path('app_offering_index') }}">{{ ic.glyph('arrowLeft', 16) }}<span>Volver a ofertas</span></a>
+    </div>
+  </header>
+
+  <div class="am-form-layout">
+    <form method="post" class="card am-form" novalidate>
+      <input type="hidden" name="_token" value="{{ csrf_token('app_offering_new') }}">
+      {% if errors|length %}
+        <div class="notice notice--danger">
+          <strong>Revisa la información:</strong>
+          <ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        </div>
+      {% endif %}
+
+      <div class="am-form__head">
+        <span class="am-form__number">01</span>
+        <div>
+          <h2>Contexto de la oferta</h2>
+          <p>La combinación período + curso de pensum + sección debe ser única.</p>
+        </div>
+      </div>
+
+      <div class="am-form__grid">
+        <div class="field">
+          <label for="periodId">Período *</label>
+          <select id="periodId" name="periodId" required>
+            <option value="">Selecciona un período…</option>
+            {% for p in periods %}
+              <option value="{{ p.id }}" {% if f.periodId == p.id ~ '' %}selected{% endif %}>{{ p.label }} · {{ status_label(p.status) }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="sectionId">Sección *</label>
+          <select id="sectionId" name="sectionId" required>
+            <option value="">Selecciona una sección…</option>
+            {% for s in sections %}
+              <option value="{{ s.id }}" {% if f.sectionId == s.id ~ '' %}selected{% endif %}>{{ s.code }} · {{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field am-form__wide">
+          <label for="curriculumCourseId">Curso del pensum *</label>
+          <select id="curriculumCourseId" name="curriculumCourseId" required>
+            <option value="">Selecciona un curso del pensum…</option>
+            {% for item in curriculumCourses %}
+              <option value="{{ item.id }}" {% if f.curriculumCourseId == item.id ~ '' %}selected{% endif %}>
+                {{ item.courseCode }} · {{ item.courseName }} — {{ item.curriculumCode }} · {{ item.cycle }}
+              </option>
+            {% endfor %}
+          </select>
+          <div class="help">Solo aparecen cursos pertenecientes a pensums activos.</div>
+        </div>
+      </div>
+
+      <div class="am-form__actions">
+        <a class="btn btn--secondary" href="{{ path('app_offering_index') }}">Cancelar</a>
+        <button class="btn btn--primary" type="submit">{{ ic.glyph('plus', 16) }}<span>Crear oferta</span></button>
+      </div>
+    </form>
+
+    <aside class="card am-context-card">
+      <span class="am-context-card__icon">{{ ic.glyph('bookmark', 20) }}</span>
+      <div>
+        <h2>Qué representa</h2>
+        <p>La oferta académica es la instancia operacional de un curso: define que ese curso del pensum se imparte en un período y una sección específicos.</p>
+        <div class="am-equation">
+          <span>Período</span><b>+</b><span>Curso del pensum</span><b>+</b><span>Sección</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

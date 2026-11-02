@@ -1,0 +1,201 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: 'Estructura académica'},
+  {label: 'Pensums'}
+] %}
+
+{% block title %}Pensums · Sistema Académico{% endblock %}
+
+{% block body %}
+{% set hasFilters = q or career or status != 'all' %}
+
+<div class="va-page cp-directory">
+
+  {% include 'components/_page_header.html.twig' with {
+    hero: true,
+    title: 'Pensums',
+    subtitle: 'Consulta la estructura curricular vigente e histórica por carrera.',
+    quote: '“Un buen plan de estudios organiza el recorrido antes de que empiece.”',
+    primaryAction: is_granted('ROLE_COORDINACION') ? {
+      label: 'Nuevo pensum',
+      route: path('app_curriculum_new')
+    } : null
+  } %}
+
+  <div class="grid-metrics cp-directory__metrics">
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.glyph('layers', 23),
+      tone: 'terracotta',
+      label: 'Pensums',
+      value: metrics.total,
+      caption: 'versiones registradas'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.glyph('check', 23),
+      tone: 'success',
+      label: 'Activos',
+      value: metrics.active,
+      caption: 'disponibles para asignación'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.glyph('clock', 23),
+      tone: 'neutral',
+      label: 'Inactivos',
+      value: metrics.inactive,
+      caption: 'conservados por historial'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.glyph('book', 23),
+      tone: 'warning',
+      label: 'Asignaciones',
+      value: metrics.courses,
+      caption: 'cursos vinculados a pensums'
+    } %}
+  </div>
+
+  <section class="card cp-directory__filters" aria-labelledby="curriculum-filter-title">
+    <div class="cp-directory__filters-head">
+      <div>
+        <h2 id="curriculum-filter-title">{{ ic.glyph('search', 18) }}<span>Buscar pensum</span></h2>
+        <p>{{ filteredTotal }} resultado{{ filteredTotal == 1 ? '' : 's' }} en la selección actual.</p>
+      </div>
+      {% if hasFilters %}
+        <a class="va-link" href="{{ path('app_curriculum_index', {per_page: pager.perPage}) }}">Limpiar filtros</a>
+      {% endif %}
+    </div>
+
+    <form method="get" class="cp-directory__filter-grid">
+      <div class="field cp-directory__search">
+        <label for="q">Código, nombre o carrera</label>
+        <div class="icon-input">
+          {{ ic.glyph('search', 16) }}
+          <input id="q" name="q" value="{{ q }}" placeholder="Ej. COMP-2027 o Computación" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="career">Carrera</label>
+        <select id="career" name="career">
+          <option value="">Todas las carreras</option>
+          {% for c in careers %}
+            <option value="{{ c.id }}" {% if career == c.id ~ '' %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="status">Estado</label>
+        <select id="status" name="status">
+          <option value="all" {% if status == 'all' %}selected{% endif %}>Todos</option>
+          <option value="active" {% if status == 'active' %}selected{% endif %}>Activos</option>
+          <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactivos</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="orden">Ordenar por</label>
+        <select id="orden" name="orden">
+          <option value="career-asc" {% if order == 'career-asc' %}selected{% endif %}>Carrera</option>
+          <option value="name-asc" {% if order == 'name-asc' %}selected{% endif %}>Nombre</option>
+          <option value="newest" {% if order == 'newest' %}selected{% endif %}>Más reciente</option>
+          <option value="courses-desc" {% if order == 'courses-desc' %}selected{% endif %}>Más cursos</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="per_page">Por página</label>
+        <select id="per_page" name="per_page">
+          {% for pp in constant('App\\Ui\\Paginator::ALLOWED_PER_PAGE') %}
+            <option value="{{ pp }}" {% if pager.perPage == pp %}selected{% endif %}>{{ pp }} pensums</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="cp-directory__filter-actions">
+        <a class="btn btn--ghost" href="{{ path('app_curriculum_index', {per_page: pager.perPage}) }}">Limpiar</a>
+        <button class="btn btn--primary" type="submit">{{ ic.glyph('filter', 15) }}<span>Aplicar filtros</span></button>
+      </div>
+    </form>
+  </section>
+
+  <section class="cp-directory__results" aria-labelledby="curriculum-results-title">
+    <div class="cp-directory__results-head">
+      <div>
+        <h2 id="curriculum-results-title">Directorio de pensums</h2>
+        <p>{{ filteredTotal }} de {{ total }} versiones.</p>
+      </div>
+      <div class="cp-directory__head-actions">
+        <a class="btn btn--secondary" href="{{ path('app_course_index') }}">
+          {{ ic.glyph('book', 15) }}<span>Catálogo de cursos</span>
+        </a>
+        {% if is_granted('ROLE_COORDINACION') %}
+          <a class="btn btn--primary" href="{{ path('app_curriculum_new') }}">
+            {{ ic.glyph('plus', 15) }}<span>Nuevo pensum</span>
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="cp-cards">
+      {% for item in items %}
+        <article class="card cp-card">
+          <div class="cp-card__head">
+            <span class="cp-card__icon">{{ ic.glyph('layers', 20) }}</span>
+            {% include 'components/_status_badge.html.twig' with {status: item.active ? 'ACTIVO' : 'INACTIVO'} %}
+          </div>
+
+          <div class="cp-card__body">
+            <p class="cp-card__code">{{ item.code }}</p>
+            <h3><a href="{{ path('app_curriculum_show', {id: item.id}) }}">{{ item.name }}</a></h3>
+            <p class="cp-card__career">{{ item.career }}</p>
+          </div>
+
+          <dl class="cp-card__facts">
+            <div><dt>Versión</dt><dd>{{ item.version|default('—') }}</dd></div>
+            <div><dt>Cursos</dt><dd>{{ item.courseCount }}</dd></div>
+            <div><dt>Ciclos</dt><dd>{{ item.cycleCount }}</dd></div>
+            <div><dt>Estudiantes activos</dt><dd>{{ item.activeStudents }}</dd></div>
+          </dl>
+
+          <div class="cp-card__validity">
+            <span>{{ ic.glyph('calendar', 14) }}</span>
+            <span>
+              {% if item.validFrom %}Desde {{ item.validFrom|date('d M Y') }}{% else %}Inicio no registrado{% endif %}
+              {% if item.validUntil %} · hasta {{ item.validUntil|date('d M Y') }}{% endif %}
+            </span>
+          </div>
+
+          <div class="cp-card__actions">
+            <a class="btn btn--primary" href="{{ path('app_curriculum_show', {id: item.id}) }}">
+              <span>Ver estructura</span>{{ ic.glyph('arrowRight', 15) }}
+            </a>
+            <a class="btn btn--secondary" href="{{ path('app_student_index', {curriculum: item.id}) }}">
+              {{ ic.glyph('users', 15) }}<span>Estudiantes</span>
+            </a>
+          </div>
+        </article>
+      {% else %}
+        <div class="card cp-directory__empty">
+          {% include 'components/_empty_state.html.twig' with {
+            title: 'No encontramos pensums',
+            message: 'Prueba con otro código, carrera o estado.'
+          } %}
+        </div>
+      {% endfor %}
+    </div>
+
+    {% include 'components/_pagination.html.twig' with {
+      page: pager.page,
+      pages: pager.pages,
+      total: filteredTotal,
+      range: pager.range,
+      perPage: pager.perPage,
+      label: 'pensums',
+      showPerPage: false
+    } %}
+  </section>
+</div>
+{% endblock %}

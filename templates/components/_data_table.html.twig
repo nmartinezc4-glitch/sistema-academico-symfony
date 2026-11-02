@@ -1,0 +1,18 @@
+<div class="table-wrap">
+<table class="data">
+  <thead><tr>{% for col in columns %}<th scope="col">{{ col.label }}</th>{% endfor %}</tr></thead>
+  <tbody>
+    {% for row in rows %}
+      <tr>{% for col in columns %}<td>
+        {% set v = row[col.key] %}
+        {% if col.type|default('text') == 'badge' %}{% include 'components/_status_badge.html.twig' with {status: v} %}
+        {% elseif col.type|default('text') == 'progress' %}{% include 'components/_progress.html.twig' with {value: v, showValue: true} %}
+        {% elseif col.link is defined %}<a href="{{ row[col.link] }}">{{ v }}</a>
+        {% else %}{{ v ?? '—' }}{% endif %}
+      </td>{% endfor %}</tr>
+    {% else %}
+      <tr><td colspan="{{ columns|length }}">{% include 'components/_empty_state.html.twig' with {title: emptyTitle|default('Sin resultados'), message: emptyMessage|default('No hay información para los filtros seleccionados.')} %}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>

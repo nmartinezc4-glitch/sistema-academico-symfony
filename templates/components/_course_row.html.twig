@@ -1,0 +1,7 @@
+<div class="course-row">
+  <div>
+    <strong>{{ code }}</strong> · {{ name }}
+    <span style="margin-left:8px">{% include 'components/_status_badge.html.twig' with {status: required} %}</span>
+  </div>
+  {% if status is defined %}{% include 'components/_status_badge.html.twig' with {status: status} %}{% endif %}
+</div>

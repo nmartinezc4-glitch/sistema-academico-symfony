@@ -1,0 +1,249 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set crumbs = [{label: 'Inicio', route: path('app_dashboard')}, {label: 'Reportes', route: path('app_report_index')}, {label: 'Alumnos por carrera'}] %}
+{% block title %}Alumnos por carrera{% endblock %}
+{% block body %}
+{% include 'components/_page_header.html.twig' with {
+  eyebrow: 'Reportes',
+  title: 'Alumnos por carrera',
+  subtitle: 'Listado de estudiantes agrupados y filtrados por carrera.',
+  quote: '“Formación diversa para un mejor mañana.”',
+  hero: true
+} %}
+
+{# ── Catálogos de los filtros, calculados antes de filtrar ── #}
+{% set allCareersH = {} %}
+{% set allStatusesH = {} %}
+{% for s in students %}
+  {% set allCareersH = allCareersH|merge({(s.career|default('Sin carrera')): true}) %}
+  {% set allStatusesH = allStatusesH|merge({(s.status): true}) %}
+{% endfor %}
+{% set allCareers = allCareersH|keys|sort %}
+{% set allStatuses = allStatusesH|keys|sort %}
+
+{# ── Filtros (aplicados en la vista sobre los datos del ViewModel) ── #}
+{% set qp = app.request.query %}
+{% set fq = qp.get('q', '') %}
+{% set fcareer = qp.get('career', '') %}
+{% set fstatus = qp.get('status', '') %}
+{% set needle = fq|lower|trim %}
+{% set students = students|filter(s =>
+  (fcareer == '' or (s.career|default('Sin carrera')) == fcareer)
+  and (fstatus == '' or s.status == fstatus)
+  and (needle == '' or needle in (s.fullName|lower) or needle in (s.code|lower))
+) %}
+
+{% set total = students|length %}
+{% set active = students|filter(s => s.status == 'ACTIVO')|length %}
+{% set retired = students|filter(s => s.status == 'RETIRADO')|length %}
+{% set activePct = total ? (active * 100 / total) : 0 %}
+{% set avgProgress = total ? (students|reduce((a, s) => a + (s.progress ?? 0), 0) / total) : 0 %}
+{% set careersH = {} %}
+{% for s in students %}{% set careersH = careersH|merge({(s.career|default('Sin carrera')): true}) %}{% endfor %}
+{% set careers = careersH|keys|sort %}
+{% set groups = {} %}
+{% for s in students %}
+  {% set c = s.career|default('Sin carrera') %}
+  {% set groups = groups|merge({(c): groups[c]|default([])|merge([s])}) %}
+{% endfor %}
+{% set palette = ['var(--terracotta)', 'var(--burgundy)', 'var(--success)', 'var(--warning)', 'var(--info)', 'var(--danger)', 'var(--terracotta-deep)', 'var(--neutral)'] %}
+{% set pcount = palette|length %}
+{% set gradient = '' %}
+{% set acc = 0 %}
+{% for c in careers %}
+  {% set n = groups[c]|length %}
+  {% set pct = total ? (n * 100 / total) : 0 %}
+  {% set gradient = gradient ~ palette[loop.index0 % pcount] ~ ' ' ~ acc|round(2) ~ '% ' ~ (acc + pct)|round(2) ~ '%, ' %}
+  {% set acc = acc + pct %}
+{% endfor %}
+{% set gradient = gradient|trim(', ') %}
+
+<form class="vc-filters" method="get" action="{{ path('app_report_students_career') }}" aria-label="Filtros del reporte">
+  <div class="field">
+    <label for="f-career">{{ ic.cap(15) }} Carrera</label>
+    <select id="f-career" name="career">
+      <option value="">Todas las carreras</option>
+      {% for c in allCareers %}<option value="{{ c }}" {% if fcareer == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-status">{{ ic.check(15) }} Estado</label>
+    <select id="f-status" name="status">
+      <option value="">Todos los estados</option>
+      {% for st in allStatuses %}<option value="{{ st }}" {% if fstatus == st %}selected{% endif %}>{{ st|title }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field field--wide">
+    <label for="f-q">Buscar estudiante</label>
+    <div class="icon-input">{{ ic.search(16) }}
+      <input id="f-q" type="search" name="q" value="{{ fq }}" placeholder="Buscar por nombre o código…">
+    </div>
+  </div>
+  <div class="vc-filters__actions">
+    {% include 'components/_report_export_actions.html.twig' with {report: 'alumnos-carrera'} %}
+    <a class="btn btn--ghost" href="{{ path('app_report_students_career') }}">{{ ic.refresh(16) }} Limpiar</a>
+    <button class="btn btn--primary" type="submit">{{ ic.search(16) }} Aplicar filtros</button>
+  </div>
+</form>
+
+<div class="vc-kpis">
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.users(24), tone: 'success',
+    label: 'Total de estudiantes', value: total,
+    caption: 'En la base académica actual'
+  } %}
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.cap(24), tone: 'terracotta',
+    label: 'Carreras activas', value: careers|length,
+    caption: 'Con estudiantes inscritos'
+  } %}
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.trend(24), tone: 'info',
+    label: 'Porcentaje de estudiantes activos', value: activePct|round, suffix: '%',
+    caption: active ~ ' de ' ~ total ~ ' estudiantes',
+    progress: activePct|round
+  } %}
+  {% include 'components/_metric_card.html.twig' with {
+    icon: ic.target(24), tone: 'warning',
+    label: 'Avance curricular promedio', value: avgProgress|round(1), suffix: '%',
+    caption: 'Sobre los pensums con avance registrado',
+    progress: avgProgress|round
+  } %}
+</div>
+
+<div class="vc-split">
+  <div class="vc-groups">
+    {% for c in careers %}
+      {% set list = groups[c] %}
+      {% set cActive = list|filter(s => s.status == 'ACTIVO')|length %}
+      {% set cRetired = list|filter(s => s.status == 'RETIRADO')|length %}
+      {% set cLen = list|length %}
+      {% set cPctActive = cLen ? (cActive * 100 / cLen) : 0 %}
+      {% set cAvg = list|reduce((a, s) => a + (s.progress ?? 0), 0) / (cLen ?: 1) %}
+      {% set firstStudent = list|first %}
+      {% set careerId = firstStudent.careerId %}
+      <details class="vc-group" open>
+        <summary>
+          <span class="vc-group__icon" aria-hidden="true">{{ ic.cap(18) }}</span>
+          <h3 class="vc-group__title">{{ c }}</h3>
+          <span class="chip chip--active">{{ ic.users(14) }} {{ list|length }} estudiantes</span>
+          <span class="vc-group__meta">
+            <span>{{ cPctActive|round }} % activos</span>
+            <span aria-hidden="true">·</span>
+            <span>{{ cRetired }} retirados</span>
+            <span aria-hidden="true">·</span>
+            <span>{{ cAvg|round(1) }} % de avance</span>
+          </span>
+          <span class="vc-group__chev" aria-hidden="true">{{ ic.chevronDown(18) }}</span>
+        </summary>
+        <div class="table-wrap vc-group__table">
+          <table class="data">
+            <thead>
+              <tr>
+                <th scope="col">Código</th>
+                <th scope="col">Nombre del estudiante</th>
+                <th scope="col">Pensum</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Avance curricular</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in list|slice(0, 3) %}
+                <tr>
+                  <td class="vc-num">{{ s.code }}</td>
+                  <td>
+                    <div class="vc-cell">
+                      <span class="vc-cell__avatar" aria-hidden="true">{{ s.fullName|split(' ')|map(p => p[:1])|slice(0, 2)|join('') }}</span>
+                      <div class="vc-cell__body"><strong>{{ s.fullName }}</strong></div>
+                    </div>
+                  </td>
+                  <td>{{ s.curriculum ?? '—' }}</td>
+                  <td>{% include 'components/_status_badge.html.twig' with {status: s.status} %}</td>
+                  <td style="min-width:170px">{% include 'components/_progress.html.twig' with {value: s.progress|round, showValue: true} %}</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="5">{% include 'components/_empty_state.html.twig' with {title: 'Carrera sin alumnos', message: 'No hay estudiantes para esta carrera con los filtros seleccionados.'} %}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <a class="vc-group__more" href="{{ careerId ? path('app_student_index', {career: careerId}) : path('app_student_index') }}">
+          Ver los {{ list|length }} estudiantes de esta carrera {{ ic.arrowRight(16) }}
+        </a>
+      </details>
+    {% else %}
+      <div class="empty-state">
+        <strong>Sin estudiantes</strong>
+        <p>No hay alumnos que coincidan con los filtros seleccionados.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  <aside>
+    <section class="vc-panel">
+      <div class="vc-panel__head">
+        <div class="vc-panel__title">
+          {{ ic.pie(20) }}
+          <div>
+            <h2>Distribución por carrera</h2>
+            <p class="vc-panel__sub">Estudiantes por carrera sobre el total del reporte.</p>
+          </div>
+        </div>
+      </div>
+      <div class="vc-donut-wrap">
+        <div class="donut" style="background: conic-gradient({{ gradient }})">
+          <div class="donut__hole">
+            <strong>{{ total }}</strong>
+            <span>estudiantes</span>
+          </div>
+        </div>
+        <div class="vc-donut-legend">
+          {% for c in careers %}
+            <span class="row">
+              <span class="dot" style="background:{{ palette[loop.index0 % pcount] }}"></span>
+              <span class="rowline">
+                <b>{{ groups[c]|length }}</b>
+                <span class="pct">{{ total ? (groups[c]|length * 100 / total)|round : 0 }} %</span>
+              </span>
+              <small>{{ c }}</small>
+            </span>
+          {% endfor %}
+        </div>
+      </div>
+      <a class="btn btn--secondary vc-cta" href="{{ path('app_student_index') }}">{{ ic.chart(16) }} Ver detalle por carrera {{ ic.arrowRight(16) }}</a>
+    </section>
+
+    <section class="vc-panel">
+      <div class="vc-panel__head">
+        <div class="vc-panel__title">
+          {{ ic.calendar(20) }}
+          <div>
+            <h2>Resumen del período</h2>
+            <p class="vc-panel__sub">Fechas y estado del período académico seleccionado.</p>
+          </div>
+        </div>
+      </div>
+      {% if periods is empty %}
+        <div class="empty-state">
+          <strong>Sin datos de período</strong>
+          <p>No hay un período específico seleccionado para este reporte.</p>
+        </div>
+      {% else %}
+        <dl class="kv">
+          <dt>Período</dt><dd>{{ periods|first }}</dd>
+        </dl>
+      {% endif %}
+      <p class="vc-panel__foot">Retirados con matrícula histórica: {{ retired }} · Activos: {{ active }}.</p>
+    </section>
+
+    <div class="vc-kpis" style="grid-template-columns:1fr;margin-bottom:0">
+      {% include 'components/_metric_card.html.twig' with {
+        icon: ic.alert(24), tone: 'neutral',
+        label: 'Estudiantes retirados', value: retired,
+        caption: 'Históricos incluidos en el listado'
+      } %}
+    </div>
+  </aside>
+</div>
+
+{% endblock %}

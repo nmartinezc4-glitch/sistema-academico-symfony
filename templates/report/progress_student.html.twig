@@ -1,0 +1,158 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set crumbs = [{label: 'Inicio', route: path('app_dashboard')}, {label: 'Reportes', route: path('app_report_index')}, {label: 'Avance por estudiante'}] %}
+{% block title %}Avance por estudiante{% endblock %}
+{% block body %}
+{% include 'components/_page_header.html.twig' with {
+  eyebrow: 'Reportes',
+  title: 'Avance curricular por estudiante',
+  subtitle: 'Progreso individual por estudiante: aprobados, pendientes, repitencias y avance del pensum.',
+  quote: '“Cada paso académico acerca a un mejor futuro.”',
+  quoteAuthor: 'Coordinación Académica',
+  hero: true
+} %}
+
+{% set allCareersH = {} %}
+{% set allCurriculaH = {} %}
+{% for r in rows %}
+  {% set allCareersH = allCareersH|merge({(r.career): true}) %}
+  {% set allCurriculaH = allCurriculaH|merge({(r.curriculum): true}) %}
+{% endfor %}
+{% set allCareers = allCareersH|keys|sort %}
+{% set allCurricula = allCurriculaH|keys|sort %}
+{% set fq = app.request.query.get('q', '') %}
+{% set fcareer = app.request.query.get('carrera', '') %}
+{% set fpensum = app.request.query.get('pensum', '') %}
+{% set needle = fq|lower|trim %}
+{% set rows = rows|filter(r =>
+  (fcareer == '' or r.career == fcareer)
+  and (fpensum == '' or r.curriculum == fpensum)
+  and (needle == '' or needle in (r.student|lower) or needle in (r.code|lower))
+) %}
+
+<form class="vd-filters" method="get" aria-label="Filtros del reporte">
+  <div class="field field--wide" style="flex:2 1 280px">
+    <label for="f-q">Buscar estudiante</label>
+    <div class="icon-input">{{ ic.search(16) }}
+      <input id="f-q" type="search" name="q" value="{{ fq }}" placeholder="Buscar por código o nombre del estudiante…">
+    </div>
+  </div>
+  <div class="field">
+    <label for="f-career">Carrera</label>
+    <select id="f-career" name="carrera">
+      <option value="">Todas las carreras</option>
+      {% for c in allCareers %}<option value="{{ c }}" {% if fcareer == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-pensum">Pensum</label>
+    <select id="f-pensum" name="pensum">
+      <option value="">Todos los pensums</option>
+      {% for p in allCurricula %}<option value="{{ p }}" {% if fpensum == p %}selected{% endif %}>{{ p }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="vd-filters__actions">
+    <a class="btn btn--ghost" href="{{ path('app_report_progress_student') }}">{{ ic.refresh(16) }} Limpiar</a>
+    {% include 'components/_report_export_actions.html.twig' with {report: 'avance-estudiante'} %}
+    <button class="btn btn--primary" type="submit">{{ ic.search(16) }} Generar reporte</button>
+  </div>
+</form>
+
+{% if rows is empty %}
+  <div class="empty-state vd-empty">
+    {{ ic.search(34) }}
+    <strong>Selecciona los filtros para generar el reporte</strong>
+    <p>Aún no hay estudiantes que coincidan con la búsqueda. Ajusta los criterios y pulsa «Generar reporte».</p>
+  </div>
+{% else %}
+  {% set total = rows|length %}
+  {% set avg = rows|reduce((a, r) => a + (r.progress ?? 0), 0) / (total ?: 1) %}
+  {% set sumApproved = rows|reduce((a, r) => a + (r.approved ?? 0), 0) %}
+  {% set sumPending = rows|reduce((a, r) => a + (r.pending ?? 0), 0) %}
+  {% set sumRepeats = rows|reduce((a, r) => a + (r.repeats ?? 0), 0) %}
+
+  <div class="vd-kpis">
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.pie(24), tone: 'terracotta',
+      label: 'Avance promedio del pensum', value: avg|round(1), suffix: '%',
+      caption: 'Sobre ' ~ total ~ ' estudiantes' , progress: avg|round
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.users(24), tone: 'info',
+      label: 'Estudiantes analizados', value: total,
+      caption: 'Con registro de avance'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.check(24), tone: 'success',
+      label: 'Cursos aprobados', value: sumApproved,
+      caption: 'Suma de todos los estudiantes'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.clock(24), tone: 'warning',
+      label: 'Cursos pendientes', value: sumPending,
+      caption: 'Aún sin aprobar'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.refresh(24), tone: 'danger',
+      label: 'Repitencias', value: sumRepeats,
+      caption: 'Cursos reprobados acumulados'
+    } %}
+  </div>
+
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th scope="col">Estudiante</th>
+          <th scope="col">Carrera</th>
+          <th scope="col">Pensum</th>
+          <th scope="col">Aprobados</th>
+          <th scope="col">Pendientes</th>
+          <th scope="col">Repitencias</th>
+          <th scope="col">Avance</th>
+          <th scope="col">Tendencia</th>
+          <th scope="col">Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          {% set p = row.progress ?? 0 %}
+          <tr>
+            <td>
+              <div class="vd-cell-student">
+                {{ ic.user(18) }}
+                <span><strong>{{ row.student }}</strong><small>{{ row.code }}</small></span>
+              </div>
+            </td>
+            <td>{{ row.career ?? '—' }}</td>
+            <td>{{ row.curriculum ?? '—' }}</td>
+            <td>{{ row.approved ?? 0 }}</td>
+            <td>{{ row.pending ?? 0 }}</td>
+            <td>{{ row.repeats ?? 0 }}</td>
+            <td style="min-width:150px">{% include 'components/_progress.html.twig' with {value: p|round, showValue: true} %}</td>
+            <td>
+              {% if p >= 70 %}<span class="vd-trend vd-trend--up">{{ ic.trend(16) }} En buen camino</span>
+              {% elseif p >= 40 %}<span class="vd-trend vd-trend--mid">{{ ic.trend(16) }} Requiere atención</span>
+              {% else %}<span class="vd-trend vd-trend--down">{{ ic.trend(16) }} Riesgo académico</span>{% endif %}
+            </td>
+            <td>
+              {% if (row.repeats ?? 0) > 0 %}{% include 'components/_status_badge.html.twig' with {status: 'REPROBADO', label: 'Con repitencias'} %}
+              {% elseif (row.pending ?? 0) > 0 %}{% include 'components/_status_badge.html.twig' with {status: 'PENDIENTE', label: 'Con pendientes'} %}
+              {% else %}{% include 'components/_status_badge.html.twig' with {status: 'APROBADO', label: 'Al día'} %}{% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="9">{% include 'components/_empty_state.html.twig' with {title: 'Sin resultados', message: 'No hay estudiantes para los filtros seleccionados.'} %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="vd-legend">
+      <strong>Leyenda:</strong>
+      <span><span class="dot dot--ok"></span> Al día: sin pendientes ni repitencias</span>
+      <span><span class="dot dot--warn"></span> Con pendientes: cursos sin aprobar</span>
+      <span><span class="dot dot--bad"></span> Con repitencias: cursos reprobados</span>
+      <span>La prioridad resume el avance, los pendientes y las repitencias del estudiante.</span>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

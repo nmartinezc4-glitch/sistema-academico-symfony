@@ -1,0 +1,122 @@
+{
+  "meta": {
+    "name": "Aula Editorial UI",
+    "version": "1.0",
+    "status": "approved-baseline"
+  },
+  "colors": {
+    "paper": "#F6F1E8",
+    "paperSoft": "#FBF8F2",
+    "surface": "#FFFDFC",
+    "surfaceMuted": "#F1E9DF",
+    "line": "#DED5C9",
+    "ink": "#342D29",
+    "inkSoft": "#6F655F",
+    "inkMuted": "#948981",
+    "terracotta": "#C86F50",
+    "terracottaDeep": "#B5543D",
+    "burgundy": "#793B46",
+    "burgundyDeep": "#652C37",
+    "success": "#6F8558",
+    "successBg": "#E3EDDE",
+    "warning": "#C89536",
+    "warningBg": "#F6E9C9",
+    "danger": "#B94F45",
+    "dangerBg": "#F4DCD7",
+    "info": "#667E88",
+    "infoBg": "#E2EAED",
+    "neutral": "#89847F",
+    "neutralBg": "#ECE9E6"
+  },
+  "typography": {
+    "display": {
+      "family": "Fraunces, Georgia, serif",
+      "weights": [
+        500,
+        600,
+        700
+      ]
+    },
+    "ui": {
+      "family": "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      "weights": [
+        400,
+        500,
+        600,
+        700
+      ]
+    },
+    "scale": {
+      "displayXl": {
+        "size": "48px",
+        "lineHeight": "54px"
+      },
+      "h1": {
+        "size": "40px",
+        "lineHeight": "46px"
+      },
+      "h2": {
+        "size": "28px",
+        "lineHeight": "34px"
+      },
+      "h3": {
+        "size": "20px",
+        "lineHeight": "26px"
+      },
+      "bodyLg": {
+        "size": "18px",
+        "lineHeight": "28px"
+      },
+      "body": {
+        "size": "15px",
+        "lineHeight": "24px"
+      },
+      "small": {
+        "size": "13px",
+        "lineHeight": "20px"
+      },
+      "micro": {
+        "size": "11px",
+        "lineHeight": "16px",
+        "letterSpacing": "0.08em"
+      }
+    }
+  },
+  "spacing": [
+    4,
+    8,
+    12,
+    16,
+    24,
+    32,
+    48,
+    64
+  ],
+  "radius": {
+    "input": 8,
+    "button": 8,
+    "card": 14,
+    "panel": 18,
+    "pill": 999
+  },
+  "layout": {
+    "topbarHeight": 64,
+    "sidebarDesktop": 248,
+    "sidebarCompact": 216,
+    "contentPaddingDesktop": 32,
+    "contentPaddingCompact": 24,
+    "breakpoints": {
+      "xl": 1440,
+      "desktop": 1200,
+      "tabletLandscape": 992,
+      "tablet": 768,
+      "mobile": 0
+    }
+  },
+  "motion": {
+    "fast": "120ms",
+    "normal": "180ms",
+    "easing": "ease-out",
+    "respectReducedMotion": true
+  }
+}

@@ -1,0 +1,270 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: 'Estructura académica'},
+  {label: 'Pensums', route: path('app_curriculum_index')},
+  {label: vm.code}
+] %}
+
+{% block title %}{{ vm.name }} · Sistema Académico{% endblock %}
+
+{% block body %}
+{% set s = vm.summary %}
+{% set vigencia = vm.active
+  ? {label: 'ACTIVO', tone: 'success'}
+  : (vm.structureLocked
+      ? {label: 'INACTIVO', tone: 'neutral'}
+      : {label: 'BORRADOR', tone: 'warning'}) %}
+
+<div class="va-page cp-page">
+
+  <header class="page-header page-header--hero cp-hero">
+    <div class="page-header__main">
+      <p class="cp-hero__eyebrow">Estructura curricular</p>
+      <h1>{{ vm.name }}</h1>
+      <p class="subtitle cp-hero__meta">
+        <span>{{ vm.code }}</span>
+        <span aria-hidden="true">·</span>
+        <span>{{ vm.career }}</span>
+        <span aria-hidden="true">·</span>
+        <span>Versión {{ vm.version|default('—') }}</span>
+      </p>
+      <blockquote class="page-header__quote">“Un buen plan de estudios organiza el recorrido antes de que empiece.”</blockquote>
+    </div>
+
+    <div class="cp-hero__actions">
+      <a class="btn btn--secondary" href="{{ path('app_curriculum_index') }}">
+        {{ ic.glyph('arrowLeft', 16) }}<span>Volver a pensums</span>
+      </a>
+      {% if is_granted('ROLE_COORDINACION') and not vm.active and not vm.structureLocked %}
+        <form method="post" action="{{ path('app_curriculum_activate', {id: vm.id}) }}">
+          <input type="hidden" name="_token" value="{{ csrf_token('app_curriculum_activate') }}">
+          <button class="btn btn--primary" type="submit">
+            {{ ic.glyph('check', 16) }}<span>Activar pensum</span>
+          </button>
+        </form>
+      {% else %}
+        <a class="btn btn--primary" href="{{ path('app_student_index', {curriculum: vm.id}) }}">
+          {{ ic.glyph('users', 16) }}<span>Ver estudiantes</span>
+        </a>
+      {% endif %}
+    </div>
+  </header>
+
+  <section class="card cp-overview" id="informacion" aria-label="Resumen del pensum">
+    <div class="cp-overview__identity">
+      <span class="cp-overview__icon">{{ ic.glyph('layers', 24) }}</span>
+      <div>
+        <p class="cp-overview__eyebrow">Pensum</p>
+        <h2>{{ vm.name }}</h2>
+        <p>{{ vm.code }}</p>
+        <span class="badge badge--{{ vigencia.tone }}">{{ vigencia.label }}</span>
+      </div>
+    </div>
+
+    <dl class="cp-overview__facts">
+      <div><dt>{{ ic.glyph('cap', 15) }} Carrera</dt><dd>{{ vm.career }}</dd></div>
+      <div><dt>{{ ic.glyph('calendar', 15) }} Vigencia desde</dt><dd>{{ vm.pen_vigente_desde ? vm.pen_vigente_desde|date('d M Y') : '—' }}</dd></div>
+      <div><dt>{{ ic.glyph('clock', 15) }} Vigencia hasta</dt><dd>{{ vm.pen_vigente_hasta ? vm.pen_vigente_hasta|date('d M Y') : 'Sin fecha de fin' }}</dd></div>
+      <div><dt>{{ ic.glyph('users', 15) }} Estudiantes activos</dt><dd>{{ s.activeStudents }}</dd></div>
+    </dl>
+
+    <div class="cp-overview__metrics">
+      <div><strong>{{ s.courses }}</strong><span>Cursos</span></div>
+      <div><strong>{{ s.cycles }}</strong><span>Ciclos</span></div>
+      <div><strong>{{ s.years }}</strong><span>Años</span></div>
+    </div>
+  </section>
+
+  {% include 'components/_tabs.html.twig' with {
+    al: 'Navegación del pensum',
+    items: [
+      {label: 'Estructura curricular', url: '#estructura', active: true, icon: 'layers'},
+      {label: 'Información general', url: '#informacion', icon: 'info'},
+      {label: 'Estudiantes', url: path('app_student_index', {curriculum: vm.id}), icon: 'users'},
+      {label: 'Catálogo de cursos', url: path('app_course_index'), icon: 'book'}
+    ]
+  } %}
+
+  {% if is_granted('ROLE_COORDINACION') and not vm.structureLocked %}
+    <section class="card cp-builder" aria-labelledby="cp-builder-title">
+      <div class="cp-builder__head">
+        <div>
+          <p class="cp-section-head__eyebrow">Configuración curricular</p>
+          <h2 id="cp-builder-title">Agregar curso al pensum</h2>
+          <p>Selecciona un curso existente, su ciclo y si será obligatorio u optativo. El orden se asigna automáticamente dentro del ciclo.</p>
+        </div>
+        <span class="badge badge--{{ vm.active ? 'info' : 'warning' }}">{{ vm.active ? 'ESTRUCTURA EDITABLE' : 'BORRADOR' }}</span>
+      </div>
+
+      <form method="post" action="{{ path('app_curriculum_course_add', {id: vm.id}) }}" class="cp-builder__form">
+        <input type="hidden" name="_token" value="{{ csrf_token('app_curriculum_course_add') }}">
+        <div class="field cp-builder__course">
+          <label for="courseId">Curso</label>
+          <select id="courseId" name="courseId" required>
+            <option value="">Selecciona un curso…</option>
+            {% for course in courseCatalog %}
+              <option value="{{ course.id }}">{{ course.code }} · {{ course.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="cycleId">Ciclo curricular</label>
+          <select id="cycleId" name="cycleId" required>
+            <option value="">Selecciona un ciclo…</option>
+            {% for cycle in availableCycles %}
+              <option value="{{ cycle.id }}">{{ cycle.label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="required">Tipo</label>
+          <select id="required" name="required">
+            <option value="1">Obligatorio</option>
+            <option value="0">Optativo</option>
+          </select>
+        </div>
+
+        <div class="cp-builder__action">
+          <button class="btn btn--primary" type="submit">
+            {{ ic.glyph('plus', 16) }}<span>Agregar curso</span>
+          </button>
+        </div>
+      </form>
+
+      {% if not vm.active %}
+        <div class="cp-builder__notice">
+          {{ ic.glyph('info', 16) }}
+          <span>Este pensum está en borrador. Configura su estructura y actívalo cuando esté listo para asignarse a estudiantes.</span>
+        </div>
+      {% endif %}
+    </section>
+  {% elseif vm.structureLocked %}
+    <section class="notice notice--warning cp-structure-lock" role="status">
+      {{ ic.glyph('lock', 17) }}
+      <div>
+        <strong>Estructura protegida</strong>
+        <p>Este pensum ya fue asignado a {{ s.assignedPrograms }} programa{{ s.assignedPrograms == 1 ? '' : 's' }} de estudiante. Para cambiar cursos debe crearse una nueva versión, preservando el historial existente.</p>
+      </div>
+    </section>
+  {% else %}
+    <section class="notice notice--info cp-structure-lock" role="status">
+      {{ ic.glyph('eye', 17) }}
+      <div>
+        <strong>Modo consulta</strong>
+        <p>Puedes revisar toda la estructura curricular. Las modificaciones del pensum corresponden a Coordinación Académica.</p>
+      </div>
+    </section>
+  {% endif %}
+
+  <div class="cp-layout">
+    <main class="cp-structure" id="estructura">
+      <div class="cp-section-head">
+        <div>
+          <p class="cp-section-head__eyebrow">Plan de estudios</p>
+          <h2>Cursos por ciclo</h2>
+          <p>{{ s.courses }} cursos distribuidos en {{ s.cycles }} ciclos académicos.</p>
+        </div>
+        <div class="cp-section-head__chips">
+          <span class="chip chip--active">{{ s.required }} obligatorios</span>
+          <span class="chip">{{ s.optional }} optativos</span>
+        </div>
+      </div>
+
+      <div class="cp-cycle-grid">
+        {% for cycle in vm.cycles %}
+          <section class="card cp-cycle">
+            <header class="cp-cycle__head">
+              <div>
+                <p>Año {{ cycle.year }} · Semestre {{ cycle.term }}</p>
+                <h3>{{ cycle.label }}</h3>
+              </div>
+              <span>{{ cycle.courses|length }} curso{{ cycle.courses|length == 1 ? '' : 's' }}</span>
+            </header>
+
+            <ol class="cp-course-list">
+              {% for course in cycle.courses %}
+                <li class="cp-course">
+                  <span class="cp-course__order">{{ '%02d'|format(course.order) }}</span>
+                  <div class="cp-course__body">
+                    <div class="cp-course__title">
+                      <strong>{{ course.code }}</strong>
+                      {% include 'components/_status_badge.html.twig' with {status: course.required} %}
+                    </div>
+                    <span>{{ course.name }}</span>
+                  </div>
+                </li>
+              {% else %}
+                <li class="cp-cycle__empty">Este ciclo no tiene cursos asociados.</li>
+              {% endfor %}
+            </ol>
+          </section>
+        {% else %}
+          <section class="card cp-structure__empty">
+            {% include 'components/_empty_state.html.twig' with {
+              title: 'Pensum sin estructura',
+              message: 'No hay ciclos ni cursos asociados a esta versión.'
+            } %}
+          </section>
+        {% endfor %}
+      </div>
+    </main>
+
+    <aside class="cp-rail" aria-label="Resumen del pensum">
+      <section class="card cp-distribution">
+        <div class="cp-card-head">
+          <h2>{{ ic.glyph('pie', 18) }}<span>Distribución</span></h2>
+        </div>
+
+        <div class="cp-distribution__body">
+          <div class="cp-donut" style="--cp-required: {{ s.requiredPct }}%">
+            <div class="cp-donut__hole">
+              <strong>{{ s.courses }}</strong>
+              <span>cursos</span>
+            </div>
+          </div>
+
+          <dl class="cp-distribution__legend">
+            <div><dt><span class="cp-dot cp-dot--required"></span>Obligatorios</dt><dd>{{ s.required }}</dd></div>
+            <div><dt><span class="cp-dot cp-dot--optional"></span>Optativos</dt><dd>{{ s.optional }}</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="card cp-detail">
+        <div class="cp-card-head">
+          <h2>{{ ic.glyph('info', 18) }}<span>Datos del pensum</span></h2>
+        </div>
+        <dl class="cp-detail__list">
+          <div><dt>Código</dt><dd>{{ vm.code }}</dd></div>
+          <div><dt>Versión</dt><dd>{{ vm.version|default('—') }}</dd></div>
+          <div><dt>Estado</dt><dd><span class="badge badge--{{ vigencia.tone }}">{{ vigencia.label }}</span></dd></div>
+          <div><dt>Inicio</dt><dd>{{ vm.pen_vigente_desde ? vm.pen_vigente_desde|date('d/m/Y') : '—' }}</dd></div>
+          <div><dt>Fin</dt><dd>{{ vm.pen_vigente_hasta ? vm.pen_vigente_hasta|date('d/m/Y') : 'Sin fecha de fin' }}</dd></div>
+        </dl>
+      </section>
+
+      <section class="card cp-actions">
+        <div class="cp-card-head">
+          <h2>{{ ic.glyph('bolt', 18) }}<span>Acciones</span></h2>
+        </div>
+        <div class="cp-actions__list">
+          <a class="btn btn--primary" href="{{ path('app_student_index', {curriculum: vm.id}) }}">
+            {{ ic.glyph('users', 15) }}<span>Ver estudiantes</span>
+          </a>
+          <a class="btn btn--secondary" href="{{ path('app_course_index') }}">
+            {{ ic.glyph('book', 15) }}<span>Catálogo de cursos</span>
+          </a>
+          <a class="btn btn--secondary" href="{{ path('app_curriculum_index') }}">
+            {{ ic.glyph('layers', 15) }}<span>Otros pensums</span>
+          </a>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+{% endblock %}

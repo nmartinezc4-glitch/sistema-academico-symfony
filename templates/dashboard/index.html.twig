@@ -1,0 +1,138 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set crumbs = [{label: 'Inicio'}] %}
+{% block title %}Panel · Sistema Académico{% endblock %}
+{% block body %}
+<div class="va-page va-page--dashboard">
+
+<section class="hero-editorial va-hero">
+  <div class="hero-editorial__eyebrow">BUENAS TARDES</div>
+  <h1>Panel de coordinación académica</h1>
+  <div class="va-hero__row">
+    <div class="va-hero__period">
+      <div class="va-hero__label">Período académico</div>
+      <p class="hero-editorial__period">{{ vm.period.year ?? '—' }} · Semestre {{ vm.period.term == 'I' ? 'I' : 'II' }}</p>
+    </div>
+    <blockquote class="hero-editorial__quote">
+      “La educación no cambia el mundo, cambia a las personas que van a cambiar el mundo.”
+      <span>— Paulo Freire</span>
+    </blockquote>
+  </div>
+  <hr class="va-hero__rule">
+  <p class="va-hero__lead">Operación académica institucional, períodos, estudiantes y seguimiento de calificaciones.</p>
+</section>
+
+<div class="grid-metrics va-kpis">
+  {% include 'components/_metric_card.html.twig' with {icon: ic.glyph('users', 26), tone: 'success', label: 'Estudiantes activos', value: vm.activeStudents, caption: 'En programas activos'} %}
+  {% include 'components/_metric_card.html.twig' with {icon: ic.glyph('file', 26), tone: 'terracotta', label: 'Resultados calificados', value: vm.gradedPercentage, suffix: '%', progress: vm.gradedPercentage} %}
+  {% include 'components/_metric_card.html.twig' with {icon: ic.glyph('check', 26), tone: 'success', label: 'Aprobación', value: vm.approvalOnGraded, suffix: '%', caption: 'sobre intentos calificados', progress: vm.approvalOnGraded} %}
+  {% include 'components/_metric_card.html.twig' with {icon: ic.glyph('clock', 26), tone: 'warning', label: 'Notas pendientes', value: vm.pendingGrades, caption: 'por registrar', progress: vm.resultsTotal > 0 ? ((vm.pendingGrades / vm.resultsTotal) * 100)|round : 0} %}
+</div>
+
+<div class="va-duo">
+  <div class="card va-panel">
+    <div class="va-panel__head">
+      <h2 class="va-panel__title">{{ ic.glyph('chart', 20) }}<span>Progreso de calificación</span></h2>
+    </div>
+    <div class="va-progress-row">
+      <div class="progress va-progress--lg" role="progressbar" aria-valuenow="{{ vm.gradedPercentage }}" aria-valuemin="0" aria-valuemax="100">
+        <span class="progress__bar" style="width: {{ vm.gradedPercentage }}%"></span>
+      </div>
+      <strong class="va-progress-row__value">{{ vm.gradedPercentage }} %</strong>
+    </div>
+    <p class="va-panel__caption">{{ vm.resultsTotal }} resultados en total · {{ vm.resultsGraded }} calificados · {{ vm.resultsPending }} pendientes</p>
+  </div>
+
+  <div class="card va-panel">
+    <div class="va-panel__head">
+      <h2 class="va-panel__title">{{ ic.glyph('megaphone', 20) }}<span>Atención académica</span></h2>
+      <a class="va-link" href="{{ path('app_report_pending_repeats') }}">Ver detalle {{ ic.glyph('arrowRight', 14) }}</a>
+    </div>
+    <div class="va-stats">
+      {% for a in vm.alerts %}
+        <div class="va-stat">
+          <span class="va-stat__icon va-stat__icon--{{ a.tone }}" aria-hidden="true">{{ ic.glyph(a.tone == 'danger' ? 'users' : (a.tone == 'warning' ? 'clock' : 'info'), 18) }}</span>
+          <div class="va-stat__body">
+            <strong class="va-stat__value">{{ a.count }}</strong>
+            <span class="va-stat__label">{{ a.title }}</span>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="va-duo">
+  <div class="card va-panel">
+    <div class="va-panel__head">
+      <h2 class="va-panel__title">{{ ic.glyph('pie', 20) }}<span>Distribución por carrera</span></h2>
+    </div>
+    <div class="va-donut-row">
+      <div class="donut" role="img" aria-label="Distribución por carrera" style="background: conic-gradient({{ vm.donutCss }})">
+        <div class="donut__hole"><strong>{{ vm.activeStudents }}</strong><span>estudiantes</span></div>
+      </div>
+      <table class="va-legend">
+        <caption class="va-sr">Distribución de estudiantes activos por carrera</caption>
+        {% for d in vm.donut %}
+          <tr>
+            <td><span class="dot" style="background: {{ d.color }}"></span> {{ d.label }}</td>
+            <td class="va-legend__value"><strong>{{ d.value }}</strong></td>
+            <td class="va-legend__pct">{{ d.pct }} %</td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+
+  <div class="card va-panel">
+    <div class="va-panel__head">
+      <h2 class="va-panel__title">{{ ic.glyph('trend', 20) }}<span>Avance promedio por carrera</span></h2>
+    </div>
+    {% for c in vm.careerProgress %}
+      <div class="va-avg-row">
+        <span class="va-avg-row__label">{{ c.career }}</span>
+        <div class="progress va-avg-row__bar"><span class="progress__bar" style="width: {{ c.percentage }}%; background: var(--success)"></span></div>
+        <strong class="va-avg-row__value">{{ c.percentage }} %</strong>
+      </div>
+    {% else %}
+      <p class="va-panel__caption">Sin datos de avance por carrera.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card va-panel">
+    <div class="va-panel__head">
+      <h2 class="va-panel__title">{{ ic.glyph('calendar', 20) }}<span>Períodos académicos</span></h2>
+      <a class="va-link" href="{{ path('app_period_index') }}">Ver todos {{ ic.glyph('arrowRight', 14) }}</a>
+    </div>
+    <div class="va-periods">
+      {% for p in vm.periods %}
+        <div class="period-card va-period-card{% if p.status == 'ABIERTO' %} is-open{% endif %}">
+          <div class="va-period-card__head">
+            <strong>{{ p.label }}</strong>
+            {% include 'components/_status_badge.html.twig' with {status: p.status} %}
+          </div>
+          <div class="va-period-card__meta">{{ p.year }} · Semestre {{ p.term }}</div>
+        </div>
+      {% else %}
+        <p class="va-panel__caption">Sin períodos académicos registrados.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card va-panel">
+    <div class="va-panel__head">
+      <h2 class="va-panel__title">{{ ic.glyph('bolt', 20) }}<span>Acciones rápidas</span></h2>
+    </div>
+    <div class="va-quick">
+      <a class="btn btn--secondary" href="{{ path('app_student_new') }}">{{ ic.glyph('user', 16) }}<span>Registrar estudiante</span></a>
+      <a class="btn btn--secondary" href="{{ path('app_grade_entry') }}">{{ ic.glyph('pencil', 16) }}<span>Ingreso de notas</span></a>
+      <a class="btn btn--secondary" href="{{ path('app_report_index') }}">{{ ic.glyph('chart', 16) }}<span>Ver reportes</span></a>
+      <a class="btn btn--secondary" href="{{ path('app_curriculum_index') }}">{{ ic.glyph('layers', 16) }}<span>Gestionar pensums</span></a>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

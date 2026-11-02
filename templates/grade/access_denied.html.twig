@@ -1,0 +1,64 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: 'Evaluación'},
+  {label: 'Ingreso de notas', route: path('app_grade_entry')},
+  {label: 'Acceso restringido'}
+] %}
+
+{% block title %}Acceso restringido · Sistema Académico{% endblock %}
+
+{% block body %}
+<div class="va-page">
+  {% include 'components/_page_header.html.twig' with {
+    hero: true,
+    eyebrow: 'Evaluación',
+    title: 'No puedes calificar a este estudiante',
+    subtitle: 'Tu cuenta docente funciona correctamente, pero el estudiante no pertenece a ninguna oferta académica que tengas asignada.',
+    quote: '“Cada docente califica únicamente las ofertas bajo su responsabilidad.”'
+  } %}
+
+  <section class="card vb-panel">
+    <div class="notice notice--warning">
+      <strong>La restricción es intencional.</strong>
+      <p>Para ingresar notas deben coincidir docente, oferta, período, sección y pensum del estudiante. Si necesitas acceso, Coordinación Académica debe asignarte la oferta correspondiente.</p>
+    </div>
+
+    <div class="vb-panel__head" style="margin-top:var(--space-5)">
+      <div>
+        <h2>Mis ofertas académicas</h2>
+        <p class="vb-panel__sub">{{ assignedOfferings|length }} oferta{{ assignedOfferings|length == 1 ? '' : 's' }} asociada{{ assignedOfferings|length == 1 ? '' : 's' }} a tu usuario.</p>
+      </div>
+      <a class="btn btn--primary" href="{{ path('app_grade_entry') }}">
+        {{ ic.glyph('arrowLeft', 16) }}<span>Volver a mis estudiantes</span>
+      </a>
+    </div>
+
+    {% if assignedOfferings|length %}
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Período</th><th>Curso</th><th>Sección</th><th>Pensum</th><th>Estado</th></tr></thead>
+          <tbody>
+          {% for offer in assignedOfferings %}
+            <tr>
+              <td><strong>{{ offer.period }}</strong></td>
+              <td><strong>{{ offer.courseCode }}</strong><br><small>{{ offer.course }}</small></td>
+              <td>Sección {{ offer.section }}</td>
+              <td>{{ offer.curriculum }}</td>
+              <td>{% include 'components/_status_badge.html.twig' with {status: offer.periodStatus} %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      {% include 'components/_empty_state.html.twig' with {
+        title: 'Sin ofertas asignadas',
+        message: 'Coordinación Académica debe asignarte al menos una oferta antes de que puedas ingresar notas.'
+      } %}
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

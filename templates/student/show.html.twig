@@ -1,0 +1,326 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: 'Estudiantes', route: path('app_student_index')},
+  {label: 'Alumnos', route: path('app_student_index')},
+  {label: vm.fullName}
+] %}
+
+{% block title %}{{ vm.fullName }} · Sistema Académico{% endblock %}
+
+{% block body %}
+{% set age = vm.birthDate ? date().diff(date(vm.birthDate)).y : null %}
+{% set totalCourses = vm.required|default(vm.approved + vm.pending) %}
+{% set failing = results|filter(r => r.status == 'REPROBADO') %}
+{% set gradeRows = results|slice(-5)|reverse|map(r => {
+  period: r.period,
+  course: r.courseCode ~ ' · ' ~ r.courseName,
+  grade: r.grade,
+  status: r.status
+}) %}
+{% set hasEnrollment = vm.currentPeriod is not empty %}
+{% set periodHeading = hasEnrollment ? (vm.currentPeriodStatus == 'ABIERTO' ? 'Período actual' : 'Último período registrado') : 'Inscripción académica' %}
+
+<div class="va-page va-page--student-profile vp-page">
+
+  <header class="page-header page-header--hero vp-hero">
+    <div class="page-header__main">
+      <div class="vp-hero__title-row">
+        <h1>{{ vm.fullName }}</h1>
+        {% include 'components/_status_badge.html.twig' with {
+          status: vm.status,
+          label: vm.status == 'ACTIVO' ? 'ACTIVO' : null
+        } %}
+      </div>
+      <p class="subtitle va-hero-meta">
+        <span>{{ vm.code }}</span>
+        <span class="va-hero-meta__sep" aria-hidden="true">·</span>
+        <span>{{ vm.birthDate ? vm.birthDate|date('d M Y') : 'Fecha no registrada' }}</span>
+        {% if age is not null %}
+          <span class="va-hero-meta__sep" aria-hidden="true">·</span>
+          <span>{{ age }} años</span>
+        {% endif %}
+      </p>
+      <blockquote class="page-header__quote">“Disciplina hoy, oportunidades mañana.”</blockquote>
+    </div>
+
+    <div class="vp-hero__actions">
+      <a class="btn btn--secondary" href="{{ path('app_student_index') }}">
+        {{ ic.glyph('arrowLeft', 16) }}<span>Volver a alumnos</span>
+      </a>
+      {% if is_granted('ROLE_COORDINACION') %}
+        <a class="btn btn--primary" href="{{ path('app_student_edit', {id: vm.id}) }}">
+          {{ ic.glyph('pencil', 16) }}<span>Editar ficha</span>
+        </a>
+      {% endif %}
+    </div>
+  </header>
+
+  <section class="card vp-overview" aria-label="Resumen académico del estudiante">
+    <div class="vp-overview__identity">
+      <span class="avatar vp-avatar">
+        {% if vm.photoPath and vm.photoPath starts with '/uploads/students/' %}
+          <img src="{{ vm.photoPath }}" alt="Fotografía de {{ vm.fullName }}">
+        {% else %}
+          <span aria-hidden="true">{{ vm.firstNames|slice(0, 1) ~ vm.lastNames|slice(0, 1) }}</span>
+        {% endif %}
+      </span>
+      <div>
+        <p class="vp-overview__eyebrow">Estudiante</p>
+        <h2>{{ vm.fullName }}</h2>
+        <p class="vp-overview__code">{{ vm.code }}</p>
+        {% if vm.address %}
+          <p class="vp-overview__address">{{ ic.glyph('home', 14) }}<span>{{ vm.address }}</span></p>
+        {% endif %}
+        {% include 'components/_status_badge.html.twig' with {status: vm.status} %}
+      </div>
+    </div>
+
+    <dl class="vp-facts">
+      <div class="vp-fact">
+        <dt>{{ ic.glyph('cap', 16) }} Carrera</dt>
+        <dd>{{ vm.career|default('Sin carrera asignada') }}</dd>
+      </div>
+      <div class="vp-fact">
+        <dt>{{ ic.glyph('book', 16) }} Pensum</dt>
+        <dd>{{ vm.curriculum|default('Sin pensum asignado') }}</dd>
+      </div>
+      <div class="vp-fact">
+        <dt>{{ ic.glyph('calendar', 16) }} Año de ingreso</dt>
+        <dd>{{ vm.entryYear|default('—') }}</dd>
+      </div>
+      <div class="vp-fact">
+        <dt>{{ ic.glyph('target', 16) }} Estado del programa</dt>
+        <dd>{% include 'components/_status_badge.html.twig' with {status: vm.programStatus|default(vm.status)} %}</dd>
+      </div>
+    </dl>
+
+    <div class="vp-current">
+      <div class="vp-current__head">
+        <span>{{ ic.glyph('calendar', 18) }}</span>
+        <div>
+          <span class="vp-current__label">{{ periodHeading }}</span>
+          <strong>{{ hasEnrollment ? vm.currentPeriod : 'Sin inscripción' }}</strong>
+        </div>
+      </div>
+      {% if vm.currentPeriodStatus %}
+        <div class="vp-current__status">
+          {% include 'components/_status_badge.html.twig' with {status: vm.currentPeriodStatus} %}
+        </div>
+      {% endif %}
+      <dl class="vp-current__details">
+        <div><dt>Sección</dt><dd>{{ vm.section|default('—') }}</dd></div>
+        <div><dt>Ciclo</dt><dd>{{ vm.cycle|default('—') }}</dd></div>
+        <div><dt>Inscripción</dt><dd>{{ status_label(vm.enrollmentStatus|default('SIN_REGISTRO')) }}</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  {% set profileTabs = [
+    {url: path('app_student_show', {id: vm.id}), label: 'Resumen', icon: 'table', active: true},
+    {url: path('app_transcript_show', {id: vm.id}), label: 'Historial académico', icon: 'book'}
+  ] %}
+  {% if is_granted('ROLE_DOCENTE') or is_granted('ROLE_DIRECCION') %}
+    {% set profileTabs = profileTabs|merge([
+      {url: path('app_report_progress_student'), label: 'Avance curricular', icon: 'chart'},
+      {url: path('app_report_grades_course'), label: 'Cursos', icon: 'layers'}
+    ]) %}
+  {% endif %}
+  {% if canGradeStudent|default(false) %}
+    {% set profileTabs = profileTabs|merge([
+      {url: path('app_grade_entry', {student: vm.id}), label: 'Notas', icon: 'file'}
+    ]) %}
+  {% endif %}
+
+  {% include 'components/_tabs.html.twig' with {
+    al: 'Secciones del perfil',
+    items: profileTabs
+  } %}
+
+  <div class="vp-summary-grid">
+    <section class="card va-panel vp-progress-card">
+      <div class="va-panel__head">
+        <div>
+          <h2 class="va-panel__title">{{ ic.glyph('pie', 20) }}<span>Avance curricular</span></h2>
+          <p class="vp-panel-caption">Situación del estudiante frente al pensum vigente.</p>
+        </div>
+        <a class="va-link" href="{{ path('app_report_progress_student') }}">Ver detalle {{ ic.glyph('arrowRight', 14) }}</a>
+      </div>
+
+      <div class="vp-progress">
+        <div class="vp-progress__ring" style="--vp-progress: {{ vm.progress|round }}%">
+          <div class="vp-progress__hole">
+            <strong>{{ vm.progress|round }}%</strong>
+            <span>avance general</span>
+          </div>
+        </div>
+
+        <div class="vp-progress__stats">
+          <div class="vp-stat">
+            <span class="vp-stat__icon vp-stat__icon--neutral">{{ ic.glyph('book', 17) }}</span>
+            <div><strong>{{ totalCourses }}</strong><span>Cursos obligatorios</span></div>
+          </div>
+          <div class="vp-stat">
+            <span class="vp-stat__icon vp-stat__icon--success">{{ ic.glyph('check', 17) }}</span>
+            <div><strong>{{ vm.approved }}</strong><span>Aprobados</span></div>
+          </div>
+          <div class="vp-stat">
+            <span class="vp-stat__icon vp-stat__icon--warning">{{ ic.glyph('clock', 17) }}</span>
+            <div><strong>{{ vm.pending }}</strong><span>Pendientes</span></div>
+          </div>
+          <div class="vp-stat">
+            <span class="vp-stat__icon vp-stat__icon--danger">{{ ic.glyph('alert', 17) }}</span>
+            <div><strong>{{ vm.repeats }}</strong><span>Reprobaciones históricas</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="card va-panel vp-situation">
+      <div class="va-panel__head">
+        <h2 class="va-panel__title">{{ ic.glyph('trend', 20) }}<span>Situación actual</span></h2>
+      </div>
+
+      <div class="vp-situation__state{{ hasEnrollment ? '' : ' vp-situation__state--empty' }}">
+        <span class="vp-situation__icon" aria-hidden="true">{{ ic.glyph('cap', 20) }}</span>
+        <div>
+          <span class="vp-situation__label">Estado académico</span>
+          <strong>{{ hasEnrollment ? (vm.status == 'ACTIVO' ? 'En curso' : status_label(vm.status)) : 'Sin inscripción' }}</strong>
+        </div>
+      </div>
+
+      <dl class="vp-situation__facts">
+        <div><dt>Período</dt><dd>{{ vm.currentPeriod|default('—') }}</dd></div>
+        <div><dt>Sección</dt><dd>{{ vm.section|default('—') }}</dd></div>
+        <div><dt>Ciclo</dt><dd>{{ vm.cycle|default('—') }}</dd></div>
+        <div><dt>Avance</dt><dd>{{ vm.progress|round }}%</dd></div>
+      </dl>
+
+      {% if is_granted('ROLE_COORDINACION') %}
+        <a class="btn btn--secondary" href="{{ path('app_student_enrollment', {id: vm.id}) }}">
+          {{ ic.glyph('pencil', 16) }}<span>Gestionar inscripción</span>
+        </a>
+      {% endif %}
+    </aside>
+  </div>
+
+  <div class="vp-main-grid">
+    <section class="card va-panel">
+      <div class="va-panel__head">
+        <div>
+          <h2 class="va-panel__title">{{ ic.glyph('layers', 20) }}<span>Trayectoria académica</span></h2>
+          <p class="vp-panel-caption">Períodos registrados desde el ingreso del estudiante.</p>
+        </div>
+      </div>
+
+      <ol class="vp-timeline">
+        {% for p in periods %}
+          <li class="vp-timeline__item">
+            <span class="vp-timeline__node vp-timeline__node--{{ status_tone(p.enrollmentStatus) }}" aria-hidden="true">
+              {{ ic.glyph('check', 11) }}
+            </span>
+            <div class="vp-timeline__content">
+              <div class="vp-timeline__head">
+                <div>
+                  <strong>{{ p.periodLabel }}</strong>
+                  <span>{{ p.cycle }} · Sección {{ p.section }}</span>
+                </div>
+                {% include 'components/_status_badge.html.twig' with {status: p.enrollmentStatus} %}
+              </div>
+              <div class="vp-timeline__meta">
+                {% include 'components/_status_badge.html.twig' with {status: p.periodStatus} %}
+              </div>
+            </div>
+          </li>
+        {% else %}
+          <li class="vp-empty">Sin inscripciones académicas registradas.</li>
+        {% endfor %}
+      </ol>
+    </section>
+
+    <aside class="vp-side-stack">
+      <section class="card va-panel">
+        <div class="va-panel__head">
+          <h2 class="va-panel__title">{{ ic.glyph('bolt', 20) }}<span>Acciones rápidas</span></h2>
+        </div>
+        <div class="vp-quick-actions">
+          {% if canGradeStudent|default(false) %}
+            {% if hasEnrollment %}
+              <a class="btn btn--primary" href="{{ path('app_grade_entry', {student: vm.id}) }}">
+                {{ ic.glyph('pencil', 16) }}<span>Ingresar notas</span>
+              </a>
+            {% else %}
+              <button class="btn btn--primary" type="button" disabled title="Primero debe existir una inscripción académica en un período.">
+                {{ ic.glyph('pencil', 16) }}<span>Ingresar notas</span>
+              </button>
+            {% endif %}
+          {% elseif is_granted('ROLE_DOCENTE') and not is_granted('ROLE_COORDINACION') %}
+            <button class="btn btn--secondary" type="button" disabled title="Coordinación debe asignarte una oferta académica compatible con este estudiante.">
+              {{ ic.glyph('lock', 16) }}<span>Sin oferta asignada</span>
+            </button>
+          {% endif %}
+          <a class="btn btn--secondary" href="{{ path('app_transcript_show', {id: vm.id}) }}">
+            {{ ic.glyph('file', 16) }}<span>Ver expediente</span>
+          </a>
+          {% if is_granted('ROLE_COORDINACION') or is_granted('ROLE_DIRECCION') %}
+            <a class="btn btn--secondary" href="{{ path('app_report_progress_student') }}">
+              {{ ic.glyph('chart', 16) }}<span>Ver avance curricular</span>
+            </a>
+          {% endif %}
+          {% if is_granted('ROLE_COORDINACION') %}
+            <a class="btn btn--secondary" href="{{ path('app_student_enrollment', {id: vm.id}) }}">
+              {{ ic.glyph('calendar', 16) }}<span>Gestionar inscripción</span>
+            </a>
+            <a class="btn btn--secondary" href="{{ path('app_student_edit', {id: vm.id}) }}">
+              {{ ic.glyph('pencil', 16) }}<span>Editar estudiante</span>
+            </a>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="card va-panel vp-alerts">
+        <div class="va-panel__head">
+          <h2 class="va-panel__title">{{ ic.glyph('bell', 20) }}<span>Alertas académicas</span></h2>
+        </div>
+        {% if failing|length > 0 %}
+          {% set f = failing|last %}
+          {% include 'components/_notice.html.twig' with {
+            tone: 'warning',
+            message: failing|length ~ ' resultado' ~ (failing|length > 1 ? 's' : '') ~ ' reprobado' ~ (failing|length > 1 ? 's' : '') ~ ' en el historial. Último: ' ~ f.courseCode ~ ' · ' ~ f.courseName ~ ' (' ~ (f.grade ?? '—') ~ ').'
+          } %}
+        {% else %}
+          {% include 'components/_notice.html.twig' with {
+            tone: 'success',
+            message: 'Sin resultados reprobados registrados en el historial académico.'
+          } %}
+        {% endif %}
+      </section>
+    </aside>
+  </div>
+
+  <section class="card va-panel vp-latest">
+    <div class="va-panel__head">
+      <div>
+        <h2 class="va-panel__title">{{ ic.glyph('file', 20) }}<span>Últimas calificaciones</span></h2>
+        <p class="vp-panel-caption">Los cinco resultados académicos más recientes.</p>
+      </div>
+      <a class="va-link" href="{{ path('app_transcript_show', {id: vm.id}) }}">Ver historial completo {{ ic.glyph('arrowRight', 14) }}</a>
+    </div>
+
+    {% include 'components/_data_table.html.twig' with {
+      columns: [
+        {key: 'period', label: 'Período'},
+        {key: 'course', label: 'Curso'},
+        {key: 'grade', label: 'Nota'},
+        {key: 'status', label: 'Estado', type: 'badge'}
+      ],
+      rows: gradeRows,
+      emptyTitle: 'Sin calificaciones',
+      emptyMessage: 'Este estudiante todavía no tiene resultados académicos.'
+    } %}
+  </section>
+
+</div>
+{% endblock %}

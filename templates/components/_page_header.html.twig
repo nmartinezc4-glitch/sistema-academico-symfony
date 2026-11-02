@@ -1,0 +1,14 @@
+{% set hero = hero|default(false) %}
+<div class="page-header{% if hero %} page-header--hero{% endif %}">
+  <div class="page-header__main">
+    {% if eyebrow is defined %}<div class="eyebrow">{{ eyebrow }}</div>{% endif %}
+    <h1>{{ title }}</h1>
+    {% if subtitle is defined %}<p class="subtitle">{{ subtitle }}</p>{% endif %}
+    {% if quote is defined %}<blockquote class="page-header__quote">{{ quote }}{% if quoteAuthor is defined %}<span>{{ quoteAuthor }}</span>{% endif %}</blockquote>{% endif %}
+  </div>
+  {% if primaryAction is defined and primaryAction %}
+    <div class="page-header__action">
+      <a class="btn btn--primary" href="{{ primaryAction.route }}">{{ primaryAction.label }}</a>
+    </div>
+  {% endif %}
+</div>

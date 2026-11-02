@@ -1,0 +1,116 @@
+[
+  {
+    "id": "login",
+    "path": "/login",
+    "routeName": "app_login",
+    "layout": "auth"
+  },
+  {
+    "id": "dashboard",
+    "path": "/",
+    "routeName": "app_dashboard",
+    "layout": "app"
+  },
+  {
+    "id": "students",
+    "path": "/alumnos",
+    "routeName": "app_student_index",
+    "layout": "app"
+  },
+  {
+    "id": "student_new",
+    "path": "/alumnos/nuevo",
+    "routeName": "app_student_new",
+    "layout": "app"
+  },
+  {
+    "id": "student_show",
+    "path": "/alumnos/{id}",
+    "routeName": "app_student_show",
+    "layout": "app"
+  },
+  {
+    "id": "transcript",
+    "path": "/expedientes/{id}",
+    "routeName": "app_transcript_show",
+    "layout": "app"
+  },
+  {
+    "id": "curriculum",
+    "path": "/pensums/{id}",
+    "routeName": "app_curriculum_show",
+    "layout": "app"
+  },
+  {
+    "id": "grade_entry",
+    "path": "/evaluacion/notas",
+    "routeName": "app_grade_entry",
+    "layout": "app"
+  },
+  {
+    "id": "reports",
+    "path": "/reportes",
+    "routeName": "app_report_index",
+    "layout": "app"
+  },
+  {
+    "id": "report_students_career",
+    "path": "/reportes/alumnos-carrera",
+    "routeName": "app_report_students_career",
+    "layout": "app"
+  },
+  {
+    "id": "report_grades_career",
+    "path": "/reportes/notas-carrera",
+    "routeName": "app_report_grades_career",
+    "layout": "app"
+  },
+  {
+    "id": "report_grades_course",
+    "path": "/reportes/notas-curso",
+    "routeName": "app_report_grades_course",
+    "layout": "app"
+  },
+  {
+    "id": "report_grades_section",
+    "path": "/reportes/notas-seccion",
+    "routeName": "app_report_grades_section",
+    "layout": "app"
+  },
+  {
+    "id": "report_progress_student",
+    "path": "/reportes/avance-estudiante",
+    "routeName": "app_report_progress_student",
+    "layout": "app"
+  },
+  {
+    "id": "report_progress_cycle",
+    "path": "/reportes/avance-ciclo",
+    "routeName": "app_report_progress_cycle",
+    "layout": "app"
+  },
+  {
+    "id": "report_pending_repeats",
+    "path": "/reportes/pendientes-repitencias",
+    "routeName": "app_report_pending_repeats",
+    "layout": "app"
+  },
+  {
+    "id": "export_xlsx",
+    "path": "/exportaciones/xlsx",
+    "routeName": "app_export_xlsx_preview",
+    "layout": "app"
+  },
+  {
+    "id": "export_pdf",
+    "path": "/exportaciones/pdf",
+    "routeName": "app_export_pdf_preview",
+    "layout": "app"
+  },
+  {
+    "id": "print_preview",
+    "path": "/impresion/reporte",
+    "routeName": "app_print_preview",
+    "layout": "print"
+  }
+]

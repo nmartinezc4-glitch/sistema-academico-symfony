@@ -1,0 +1,13 @@
+/* Page-specific tweaks; promote rules used in 3+ screens to components.css */
+.login { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
+.login__visual { padding: var(--space-16) var(--space-12); background:
+  linear-gradient(180deg, rgba(251,248,242,.95) 0%, rgba(251,248,242,.86) 42%, rgba(251,248,242,.42) 78%, rgba(251,248,242,.18) 100%),
+  url('/images/login-panel.jpg') center / cover no-repeat; display: flex; flex-direction: column; justify-content: center; }
+.login__brand { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-8); letter-spacing: .18em; font-family: var(--font-display); }
+.login__visual h1 { font-size: 52px; line-height: 1.1; }
+.login__lead { color: var(--ink-soft); max-width: 42ch; font-size: 17px; }
+.login__quote { font-style: italic; font-family: var(--font-display); color: var(--ink-soft); border-left: 3px solid var(--terracotta); padding-left: var(--space-4); max-width: 36ch; }
+.login__motto { margin-top: var(--space-12); color: var(--terracotta-deep); letter-spacing: .2em; font-size: 12px; }
+.login__panel { display: flex; align-items: center; justify-content: center; padding: var(--space-12); background: var(--paper-soft); }
+.login__card { width: 100%; max-width: 440px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: var(--space-12); }
+@media (max-width: 991px) { .login { grid-template-columns: 1fr; } .login__visual { display: none; } }

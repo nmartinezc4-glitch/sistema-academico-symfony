@@ -1,0 +1,133 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: 'Gestión académica'},
+  {label: 'Años y períodos'}
+] %}
+{% block title %}Años y períodos · Sistema Académico{% endblock %}
+
+{% block body %}
+<div class="va-page cal-page">
+  {% include 'components/_page_header.html.twig' with {
+    hero: true,
+    title: 'Años y períodos',
+    subtitle: 'Administra el calendario académico que habilita ofertas, inscripciones y captura de notas.',
+    quote: '“El calendario académico define cuándo una operación es válida.”',
+    primaryAction: is_granted('ROLE_COORDINACION') ? {
+      label: 'Nuevo período',
+      route: path('app_period_new')
+    } : null
+  } %}
+
+  <div class="grid-metrics cal-metrics">
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.glyph('calendar', 22), tone: 'terracotta',
+      label: 'Años lectivos', value: metrics.years, caption: 'registrados'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.glyph('layers', 22), tone: 'neutral',
+      label: 'Períodos', value: metrics.periods, caption: 'semestres registrados'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.glyph('check', 22), tone: 'success',
+      label: 'Abiertos', value: metrics.open, caption: 'admiten escritura de notas'
+    } %}
+    {% include 'components/_metric_card.html.twig' with {
+      icon: ic.glyph('clock', 22), tone: 'warning',
+      label: 'Planificados', value: metrics.planned, caption: metrics.closed ~ ' cerrados'
+    } %}
+  </div>
+
+  {% if is_granted('ROLE_COORDINACION') %}
+    <div class="cal-actions">
+      <a class="btn btn--secondary" href="{{ path('app_year_new') }}">{{ ic.glyph('plus', 15) }}<span>Nuevo año lectivo</span></a>
+      <a class="btn btn--primary" href="{{ path('app_period_new') }}">{{ ic.glyph('plus', 15) }}<span>Nuevo período</span></a>
+    </div>
+  {% endif %}
+
+  <div class="cal-years">
+    {% for year in years %}
+      <section class="card cal-year">
+        <header class="cal-year__head">
+          <div>
+            <p class="cal-eyebrow">Año lectivo</p>
+            <div class="cal-year__title-row">
+              <h2>{{ year.year }}</h2>
+              {% include 'components/_status_badge.html.twig' with {status: year.status} %}
+            </div>
+            <p>{{ year.name }}</p>
+          </div>
+          <div class="cal-year__dates">
+            <span>{{ year.startDate|date('d M Y') }}</span><b>→</b><span>{{ year.endDate|date('d M Y') }}</span>
+          </div>
+        </header>
+
+        <div class="cal-period-grid">
+          {% for period in year.periods %}
+            <article class="cal-period cal-period--{{ period.status|lower }}">
+              <div class="cal-period__top">
+                <span class="cal-period__icon">{{ ic.glyph('calendar', 18) }}</span>
+                <div>
+                  <p class="cal-period__label">{{ year.year }}-{{ period.number == 1 ? 'I' : 'II' }}</p>
+                  <h3>{{ period.label }}</h3>
+                </div>
+                {% include 'components/_status_badge.html.twig' with {status: period.status} %}
+              </div>
+
+              <dl class="cal-period__facts">
+                <div><dt>Inicio</dt><dd>{{ period.startDate|date('d/m/Y') }}</dd></div>
+                <div><dt>Fin</dt><dd>{{ period.endDate|date('d/m/Y') }}</dd></div>
+                <div><dt>Política</dt><dd>{{ period.policyCode }}</dd></div>
+                <div><dt>Nota mínima</dt><dd>{{ period.passingGrade|number_format(2, '.', '') }}</dd></div>
+              </dl>
+
+              <div class="cal-period__actions">
+                {% if is_granted('ROLE_COORDINACION') %}
+                  {% if period.status == 'PLANIFICADO' %}
+                    <form method="post" action="{{ path('app_period_open', {id: period.id}) }}">
+                      <input type="hidden" name="_token" value="{{ csrf_token('app_period_open') }}">
+                      <button class="btn btn--primary" type="submit">{{ ic.glyph('check', 15) }}<span>Abrir período</span></button>
+                    </form>
+                  {% elseif period.status == 'ABIERTO' %}
+                    <form method="post" action="{{ path('app_period_close', {id: period.id}) }}">
+                      <input type="hidden" name="_token" value="{{ csrf_token('app_period_close') }}">
+                      <button class="btn btn--secondary" type="submit">{{ ic.glyph('lock', 15) }}<span>Cerrar período</span></button>
+                    </form>
+                  {% else %}
+                    <span class="cal-period__closed-note">{{ ic.glyph('lock', 14) }} Historial protegido</span>
+                    <form method="post" action="{{ path('app_period_open', {id: period.id}) }}" onsubmit="return confirm('¿Reabrir este período para realizar una corrección académica excepcional?')">
+                      <input type="hidden" name="_token" value="{{ csrf_token('app_period_open') }}">
+                      <button class="btn btn--secondary" type="submit">{{ ic.glyph('refresh', 15) }}<span>Reabrir período</span></button>
+                    </form>
+                  {% endif %}
+                {% elseif period.status == 'CERRADO' %}
+                  <span class="cal-period__closed-note">{{ ic.glyph('lock', 14) }} Historial protegido</span>
+                {% endif %}
+
+                {% if period.status == 'ABIERTO' and is_granted('ROLE_DOCENTE') %}
+                  <a class="btn btn--secondary" href="{{ path('app_grade_entry') }}">{{ ic.glyph('pencil', 15) }}<span>Ingreso de notas</span></a>
+                {% endif %}
+              </div>
+            </article>
+          {% else %}
+            <div class="cal-year__empty">
+              {% include 'components/_empty_state.html.twig' with {
+                title: 'Año sin períodos',
+                message: 'Crea Semestre I o Semestre II dentro de este año lectivo.'
+              } %}
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+    {% else %}
+      <section class="card cal-empty">
+        {% include 'components/_empty_state.html.twig' with {
+          title: 'Sin años lectivos',
+          message: 'Crea primero un año lectivo para comenzar a definir períodos académicos.'
+        } %}
+      </section>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

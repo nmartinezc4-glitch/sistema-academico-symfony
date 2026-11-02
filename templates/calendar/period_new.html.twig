@@ -1,0 +1,89 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set f = form|default({}) %}
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: 'Años y períodos', route: path('app_period_index')},
+  {label: 'Nuevo período'}
+] %}
+{% block title %}Nuevo período · Sistema Académico{% endblock %}
+
+{% block body %}
+<div class="va-page cal-form-page">
+  <header class="page-header page-header--hero cal-hero">
+    <div class="page-header__main">
+      <p class="cal-eyebrow">Calendario académico</p>
+      <h1>Nuevo período</h1>
+      <p class="subtitle">Crea un semestre dentro de un año lectivo y deja que el sistema asigne la política vigente.</p>
+      <blockquote class="page-header__quote">“La regla de aprobación pertenece al período en que se cursó.”</blockquote>
+    </div>
+    <div class="page-header__action">
+      <a class="btn btn--secondary" href="{{ path('app_period_index') }}">{{ ic.glyph('arrowLeft', 16) }}<span>Volver</span></a>
+    </div>
+  </header>
+
+  <div class="cal-form-layout">
+    <form method="post" class="card cal-form" novalidate>
+      <input type="hidden" name="_token" value="{{ csrf_token('app_period_new') }}">
+      {% if errors|length %}
+        <div class="notice notice--danger"><strong>Revisa la información:</strong><ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul></div>
+      {% endif %}
+
+      <div class="cal-form__head">
+        <span class="cal-form__number">01</span>
+        <div><h2>Contexto del período</h2><p>El período nace PLANIFICADO. Debes abrirlo explícitamente para permitir captura de notas.</p></div>
+      </div>
+
+      <div class="cal-form__grid">
+        <div class="field">
+          <label for="yearId">Año lectivo *</label>
+          <select id="yearId" name="yearId" required>
+            <option value="">Selecciona un año…</option>
+            {% for y in years %}
+              <option value="{{ y.id }}" {% if f.yearId == y.id ~ '' %}selected{% endif %}>{{ y.year }} · {{ y.name }} · {{ status_label(y.status) }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="number">Semestre *</label>
+          <select id="number" name="number" required>
+            <option value="">Selecciona…</option>
+            <option value="1" {% if f.number == '1' %}selected{% endif %}>Semestre I</option>
+            <option value="2" {% if f.number == '2' %}selected{% endif %}>Semestre II</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="startDate">Fecha de inicio *</label>
+          <input id="startDate" name="startDate" type="date" value="{{ f.startDate|default('') }}" required>
+        </div>
+        <div class="field">
+          <label for="endDate">Fecha de fin *</label>
+          <input id="endDate" name="endDate" type="date" value="{{ f.endDate|default('') }}" required>
+        </div>
+      </div>
+
+      <div class="notice notice--info cal-form__policy-note">
+        {{ ic.glyph('info', 16) }}
+        <div>
+          <strong>Política automática</strong>
+          <p>El sistema asigna la política académica vigente según la fecha de inicio. Si no existe una política válida, el período no podrá registrarse.</p>
+        </div>
+      </div>
+
+      <div class="cal-form__actions">
+        <a class="btn btn--secondary" href="{{ path('app_period_index') }}">Cancelar</a>
+        <button class="btn btn--primary" type="submit">{{ ic.glyph('check', 16) }}<span>Crear período</span></button>
+      </div>
+    </form>
+
+    <aside class="card cal-context">
+      <span class="cal-context__icon">{{ ic.glyph('lock', 20) }}</span>
+      <div>
+        <h2>Ciclo de estado</h2>
+        <div class="cal-state-flow"><span>PLANIFICADO</span><b>→</b><span>ABIERTO</span><b>→</b><span>CERRADO</span></div>
+        <p>Solo ABIERTO permite insertar, corregir o eliminar resultados académicos.</p>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

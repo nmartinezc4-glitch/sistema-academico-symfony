@@ -1,0 +1,55 @@
+{#-
+  Paginación real de servidor. Uso:
+    {% include 'components/_pagination.html.twig' with {
+      page: pager.page, pages: pager.pages, total: pager.total,
+      range: pager.range, perPage: pager.perPage, label: 'estudiantes',
+      showPerPage: true
+    } %}
+  Reconstruye los enlaces conservando los query params actuales (filtros).
+-#}
+{% if total > 0 %}
+{% set route = app.request.attributes.get('_route') %}
+{% set qp = app.request.query.all %}
+{% set showPerPage = showPerPage|default(true) %}
+<nav class="pagination" aria-label="Paginación de resultados">
+  <p class="pagination__summary">Mostrando {{ range.from }}–{{ range.to }} de {{ total }} {{ label|default('resultados') }}</p>
+  {% if pages > 1 %}
+  <div class="pagination__pages">
+    {% if page > 1 %}
+      <a class="pagination__link" href="{{ path(route, qp|merge({page: page - 1})) }}" rel="prev" aria-label="Página anterior">‹</a>
+    {% endif %}
+    {% set last = 0 %}
+    {% for p in 1..pages %}
+      {% if p == 1 or p == pages or (p >= page - 2 and p <= page + 2) %}
+        {% if p > last + 1 %}<span class="pagination__ellipsis" aria-hidden="true">…</span>{% endif %}
+        {% if p == page %}
+          <span class="pagination__link is-current" aria-current="page">{{ p }}</span>
+        {% else %}
+          <a class="pagination__link" href="{{ path(route, qp|merge({page: p})) }}">{{ p }}</a>
+        {% endif %}
+        {% set last = p %}
+      {% endif %}
+    {% endfor %}
+    {% if page < pages %}
+      <a class="pagination__link" href="{{ path(route, qp|merge({page: page + 1})) }}" rel="next" aria-label="Página siguiente">›</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if showPerPage %}
+    {% set sizes = constant('App\\Ui\\Paginator::ALLOWED_PER_PAGE') %}
+    {% if pages > 1 or total > sizes|first %}
+    <div class="pagination__perpage">
+      <span>Por página:</span>
+      {% for pp in sizes %}
+        {% if pp == perPage %}
+          <span class="pagination__link is-current" aria-current="true">{{ pp }}</span>
+        {% else %}
+          <a class="pagination__link" href="{{ path(route, qp|merge({per_page: pp, page: 1})) }}">{{ pp }}</a>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endif %}
+</nav>
+{% endif %}

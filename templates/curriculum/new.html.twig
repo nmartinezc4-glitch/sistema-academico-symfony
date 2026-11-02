@@ -1,0 +1,127 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+
+{% set crumbs = [
+  {label: 'Inicio', route: path('app_dashboard')},
+  {label: 'Estructura académica'},
+  {label: 'Pensums', route: path('app_curriculum_index')},
+  {label: 'Nuevo pensum'}
+] %}
+
+{% block title %}Nuevo pensum · Sistema Académico{% endblock %}
+{% set f = form|default({}) %}
+
+{% block body %}
+<div class="va-page cp-new">
+
+  <header class="page-header page-header--hero cp-hero">
+    <div class="page-header__main">
+      <p class="cp-hero__eyebrow">Estructura curricular</p>
+      <h1>Nuevo pensum</h1>
+      <p class="subtitle">Crea una nueva versión curricular sin alterar pensums que ya forman parte del historial de estudiantes.</p>
+      <blockquote class="page-header__quote">“Las reformas académicas deben crear una versión nueva, no reescribir la historia.”</blockquote>
+    </div>
+    <div class="cp-hero__actions">
+      <a class="btn btn--secondary" href="{{ path('app_curriculum_index') }}">
+        {{ ic.glyph('arrowLeft', 16) }}<span>Volver a pensums</span>
+      </a>
+    </div>
+  </header>
+
+  <div class="cp-new__layout">
+    <form method="post" class="card cp-new__form" novalidate>
+      <input type="hidden" name="_token" value="{{ csrf_token('app_curriculum_new') }}">
+      {% if errors|length %}
+        <div class="notice notice--danger" role="alert">
+          <strong>Revisa la información:</strong>
+          <ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        </div>
+      {% endif %}
+
+      <header class="cp-new__section-head">
+        <span class="cp-new__number">01</span>
+        <div>
+          <h2>Identidad del pensum</h2>
+          <p>La versión y el código institucional se calculan automáticamente.</p>
+        </div>
+      </header>
+
+      <div class="cp-new__grid">
+        <div class="field">
+          <label for="careerId">Carrera *</label>
+          <select id="careerId" name="careerId" required>
+            <option value="">Selecciona una carrera…</option>
+            {% for career in careers %}
+              <option value="{{ career.id }}" {% if f.careerId == career.id ~ '' %}selected{% endif %}>{{ career.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Código del pensum</label>
+          <div class="cp-new__autocode" aria-label="Código generado automáticamente">
+            <strong>SIGLA-CARRERA-AAAA</strong>
+            <span>Se genera con el código de la carrera y el año de inicio. Si existe otra versión ese año, se agrega la versión automáticamente.</span>
+          </div>
+        </div>
+
+        <div class="field cp-new__wide">
+          <label for="name">Nombre *</label>
+          <input id="name" name="name" value="{{ f.name|default('') }}" maxlength="150" placeholder="Ej. Computación · Pensum 2028" required>
+        </div>
+      </div>
+
+      <header class="cp-new__section-head cp-new__section-head--second">
+        <span class="cp-new__number">02</span>
+        <div>
+          <h2>Vigencia</h2>
+          <p>El nuevo pensum se crea como borrador y no puede asignarse hasta que lo actives.</p>
+        </div>
+      </header>
+
+      <div class="cp-new__grid">
+        <div class="field">
+          <label for="validFrom">Vigente desde *</label>
+          <input id="validFrom" name="validFrom" type="date" value="{{ f.validFrom|default('') }}" required>
+        </div>
+        <div class="field">
+          <label for="validUntil">Vigente hasta</label>
+          <input id="validUntil" name="validUntil" type="date" value="{{ f.validUntil|default('') }}">
+          <div class="help">Opcional. Déjalo vacío si no tiene fecha de cierre definida.</div>
+        </div>
+      </div>
+
+      <div class="cp-new__actions">
+        <a class="btn btn--secondary" href="{{ path('app_curriculum_index') }}">Cancelar</a>
+        <button class="btn btn--primary" type="submit">
+          <span>Crear borrador</span>{{ ic.glyph('arrowRight', 16) }}
+        </button>
+      </div>
+    </form>
+
+    <aside class="cp-new__rail">
+      <section class="card cp-new__guidance">
+        <span class="cp-new__guidance-icon">{{ ic.glyph('layers', 20) }}</span>
+        <div>
+          <h2>Flujo recomendado</h2>
+          <ol>
+            <li>Crear la nueva versión.</li>
+            <li>Agregar cursos por ciclo.</li>
+            <li>Revisar obligatorios y optativos.</li>
+            <li>Activar el pensum.</li>
+            <li>Asignarlo a nuevos estudiantes.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="card cp-new__integrity">
+        {{ ic.glyph('lock', 18) }}
+        <div>
+          <h3>Historial protegido</h3>
+          <p>Si un pensum ya fue asignado a estudiantes, su estructura no se modifica desde esta pantalla. La reforma se realiza creando una nueva versión.</p>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+{% endblock %}

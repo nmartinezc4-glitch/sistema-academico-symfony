@@ -1,0 +1,66 @@
+{% extends 'layout/app.html.twig' %}
+{% import 'components/_icons.html.twig' as ic %}
+{% set crumbs = [{label:'Inicio', route:path('app_dashboard')},{label:'Configuración'},{label:'Usuarios y roles'}] %}
+{% block title %}Usuarios y roles · Sistema Académico{% endblock %}
+{% block body %}
+<div class="va-page">
+  {% include 'components/_page_header.html.twig' with {
+    hero: true,
+    eyebrow: 'Seguridad',
+    title: 'Usuarios y roles',
+    subtitle: 'Administra identidades institucionales, fotografías y responsabilidades sin crear un superusuario.',
+    quote: '“Cada permiso debe corresponder a una responsabilidad real.”',
+    primaryAction: {label:'Nuevo usuario', route:path('app_security_user_new')}
+  } %}
+
+  <section class="card vb-panel">
+    <div class="vb-panel__head">
+      <div><h2>Usuarios institucionales</h2><p class="vb-panel__sub">{{ users|length }} cuentas registradas</p></div>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Usuario</th><th>Correo</th><th>Roles</th><th>Estado</th><th>Último acceso</th><th></th></tr></thead>
+        <tbody>
+        {% for u in users %}
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span class="avatar-top" aria-hidden="true">
+                  {% if u.photoPath %}<img src="{{ app.request.basePath ~ u.photoPath }}" alt="">
+                  {% else %}<span>{{ u.initials }}</span>{% endif %}
+                </span>
+                <strong>{{ u.fullName }}</strong>
+              </div>
+            </td>
+            <td>{{ u.email }}</td>
+            <td>
+              {% for role in u.roles %}
+                <span class="badge badge--info">{{ role|replace({'ROLE_':'','_':' '})|lower|title }}</span>
+              {% else %}<span class="muted">Sin rol</span>{% endfor %}
+            </td>
+            <td>{% include 'components/_status_badge.html.twig' with {status: u.active ? 'ACTIVO' : 'INACTIVO'} %}</td>
+            <td>{{ u.lastLogin ? u.lastLogin|date('d/m/Y H:i') : 'Nunca' }}</td>
+            <td><a class="btn btn--secondary" href="{{ path('app_security_user_edit',{id:u.id}) }}">Editar</a></td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6">No hay usuarios creados.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card vb-panel" style="margin-top:var(--space-5)">
+    <div class="vb-panel__head"><div><h2>Matriz de responsabilidades</h2><p class="vb-panel__sub">Los roles pueden combinarse; ninguno equivale a superusuario.</p></div></div>
+    <div class="vc-cards">
+      {% for role in roles %}
+        <article class="vc-rcard">
+          <span class="badge badge--info">{{ role.code }}</span>
+          <h3>{{ role.name }}</h3>
+          <p>{{ role.description }}</p>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

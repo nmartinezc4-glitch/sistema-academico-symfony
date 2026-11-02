@@ -1,0 +1,226 @@
+/* Lote c: estilos específicos de vistas (solo clases con prefijo vc-) */
+
+/* ── KPIs (08–12) ─────────────────────────────────────────────── */
+.vc-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6); }
+.vc-kpis--5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 1199px) { .vc-kpis, .vc-kpis--5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767px) { .vc-kpis, .vc-kpis--5 { grid-template-columns: 1fr; } }
+
+/* ── Barra de filtros (08–12) ─────────────────────────────────── */
+.vc-filters {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+  padding: var(--space-4) var(--space-6); margin-bottom: var(--space-6);
+  display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-4); align-items: flex-end;
+}
+.vc-filters__title {
+  display: flex; align-items: center; gap: var(--space-2); width: 100%;
+  font-family: var(--font-display); font-size: 17px; color: var(--burgundy-deep); margin: 0 0 var(--space-1);
+}
+.vc-filters__title svg { color: var(--terracotta-deep); }
+.vc-filters .field { margin-bottom: 0; min-width: 172px; flex: 1 1 172px; }
+.vc-filters .field--wide { flex: 2 1 240px; }
+.vc-filters .field label { display: flex; align-items: center; gap: 6px; }
+.vc-filters .field label svg { color: var(--terracotta-deep); }
+.vc-filters__actions { display: flex; gap: var(--space-3); margin-left: auto; align-items: center; flex-wrap: wrap; }
+.vc-filters__actions--stack { flex-direction: column; align-items: stretch; flex-wrap: nowrap; }
+.vc-filters__actions--stack .btn { justify-content: center; }
+
+/* ── Tabs + acción del catálogo (08) ──────────────────────────── */
+.vc-tabs-row { display: flex; gap: var(--space-4); align-items: flex-start; justify-content: space-between; flex-wrap: wrap; margin-bottom: var(--space-6); }
+.vc-tabs-row .tabs { flex: 1 1 auto; margin-bottom: 0; }
+
+/* ── Tarjetas del catálogo (08) ───────────────────────────────── */
+.vc-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); }
+@media (max-width: 1199px) { .vc-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767px) { .vc-cards { grid-template-columns: 1fr; } }
+
+.vc-rcard {
+  display: flex; flex-direction: column; gap: var(--space-2);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft); padding: var(--space-4); min-width: 0;
+}
+.vc-rcard__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.vc-rcard__icon {
+  width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--danger-bg); color: var(--terracotta-deep);
+}
+.vc-rcard__fav {
+  display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px;
+  border-radius: 50%; border: 1px solid transparent; background: transparent; color: var(--ink-muted); cursor: not-allowed;
+}
+.vc-rcard__fav:hover { border-color: var(--line); color: var(--warning); }
+.vc-rcard h3 { font-size: 19px; margin: var(--space-1) 0 0; }
+.vc-rcard h3 a { color: var(--ink); }
+.vc-rcard p { color: var(--ink-soft); font-size: 13.5px; line-height: 20px; margin: 0; flex: 1 1 auto; }
+.vc-rcard__foot { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-2); }
+.vc-rcard__foot .btn { flex: 1 1 auto; padding: 8px 12px; font-size: 13.5px; }
+
+/* ── Panel genérico con encabezado (09–12) ────────────────────── */
+.vc-panel {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft); padding: var(--space-6); margin-bottom: var(--space-6); min-width: 0;
+}
+.vc-panel__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-4); }
+.vc-panel__title { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.vc-panel__title svg { color: var(--terracotta-deep); flex: none; }
+.vc-panel__title h2 { font-size: 20px; line-height: 26px; margin: 0; }
+.vc-panel__sub { color: var(--ink-soft); font-size: 13.5px; margin: 2px 0 0; }
+.vc-panel__tools { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
+.vc-panel__tools .btn { padding: 7px 12px; font-size: 13.5px; }
+.vc-panel .table-wrap { border: 0; }
+.vc-panel__foot { border-top: 1px solid var(--line); margin-top: var(--space-4); padding-top: var(--space-3); color: var(--ink-muted); font-size: 12.5px; }
+
+/* ── Layout de columnas (09–12) ───────────────────────────────── */
+.vc-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); align-items: start; margin-bottom: var(--space-6); }
+@media (max-width: 991px) { .vc-cols { grid-template-columns: 1fr; } }
+.vc-split { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-6); align-items: start; }
+@media (max-width: 991px) { .vc-split { grid-template-columns: 1fr; } }
+.vc-split > * { min-width: 0; }
+
+/* ── Gráficos de barras (10/11) ───────────────────────────────── */
+.vc-legend { display: flex; flex-wrap: wrap; gap: var(--space-4); justify-content: flex-end; font-size: 13px; color: var(--ink-soft); margin-bottom: var(--space-3); }
+.vc-legend .dot { margin-right: 6px; }
+.vc-chart { display: flex; align-items: flex-end; gap: var(--space-6); padding: var(--space-6) 0 0; }
+.vc-chart__group { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.vc-chart__bars { display: flex; align-items: flex-end; justify-content: center; gap: 6px; width: 100%; height: 170px; }
+.vc-col { flex: 1 1 0; max-width: 44px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; }
+.vc-col__val { font-size: 11.5px; font-weight: 700; color: var(--ink-soft); }
+.vc-col__bar { width: 100%; min-height: 3px; border-radius: 5px 5px 0 0; background: var(--terracotta); }
+.vc-chart__label { font-size: 12.5px; color: var(--ink-soft); text-align: center; line-height: 17px; }
+.vc-chart__label small { display: block; color: var(--ink-muted); }
+.vc-chart--hist .vc-chart__group { gap: var(--space-2); }
+.vc-chart--hist .vc-col { max-width: 64px; }
+.vc-chart--hist .vc-col__bar { border-radius: 6px 6px 0 0; }
+.vc-chart__axis { text-align: center; font-size: 12.5px; color: var(--ink-muted); margin: var(--space-3) 0 0; }
+
+/* ── Combinado: barras de promedio + línea de aprobación (11) ── */
+.vc-combo .vc-chart { gap: 0; padding-top: 0; }
+.vc-combo__plot { position: relative; }
+.vc-combo__line { position: absolute; top: 0; left: 0; width: 100%; height: 170px; pointer-events: none; z-index: 1; overflow: visible; }
+.vc-combo__line polyline { fill: none; stroke: var(--success); stroke-width: 2px; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.vc-combo .vc-chart__bars { position: relative; z-index: 2; }
+.vc-combo__mark { position: absolute; left: 50%; bottom: var(--b, 0%); transform: translate(-50%, 50%); z-index: 3; line-height: 0; }
+.vc-combo__mark i {
+  display: block; width: 11px; height: 11px; border-radius: 50%;
+  background: var(--success); border: 2px solid var(--surface); box-shadow: 0 0 0 1.5px var(--success);
+}
+.vc-combo__mark em {
+  position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px;
+  font-style: normal; font-size: 11.5px; font-weight: 700; line-height: 16px; color: var(--success);
+  background: var(--surface); padding: 0 5px; border-radius: 4px; white-space: nowrap;
+}
+
+/* ── Barras apiladas + % de aprobación (12) ───────────────────── */
+.vc-stack { display: flex; align-items: flex-end; gap: var(--space-6); padding-top: var(--space-6); }
+.vc-stack__group { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.vc-stack__col { position: relative; width: 100%; max-width: 92px; height: 190px; display: flex; flex-direction: column; justify-content: flex-end; }
+.vc-stack__seg {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 12.5px; font-weight: 700; color: var(--paper-soft); min-height: 4px;
+}
+.vc-stack__seg--ok { background: var(--success); }
+.vc-stack__seg--warn { background: var(--warning); }
+.vc-stack__seg--bad { background: var(--danger); }
+.vc-stack__note {
+  position: absolute; left: calc(100% + 6px); bottom: var(--b, 0%); transform: translateY(50%);
+  font-size: 11.5px; font-weight: 700; white-space: nowrap; line-height: 16px;
+}
+.vc-stack__note--ok { color: var(--success); }
+.vc-stack__note--warn { color: var(--warning); }
+.vc-stack__note--bad { color: var(--danger); }
+.vc-hbars { display: flex; flex-direction: column; gap: var(--space-4); padding-top: var(--space-6); }
+.vc-hbar { display: grid; grid-template-columns: 92px minmax(0, 1fr) 62px; gap: var(--space-3); align-items: center; font-size: 13.5px; }
+.vc-hbar__label { color: var(--ink-soft); text-align: right; }
+.vc-hbar__track { background: var(--surface-muted); border-radius: 999px; height: 22px; overflow: hidden; }
+.vc-hbar__fill { display: block; height: 100%; background: var(--success); border-radius: 999px; }
+.vc-hbar__value { font-weight: 700; font-family: var(--font-display); font-size: 16px; }
+
+/* ── Celdas de estudiante y chips (09–12) ─────────────────────── */
+.vc-cell { display: flex; align-items: center; gap: var(--space-3); }
+.vc-cell__avatar {
+  width: 32px; height: 32px; border-radius: 50%; flex: none;
+  background: var(--surface-muted); color: var(--burgundy);
+  display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+}
+.vc-cell__body { min-width: 0; }
+.vc-cell__body strong { display: block; font-weight: 600; }
+.vc-cell__body small { display: block; color: var(--ink-muted); font-size: 12.5px; }
+.vc-num { font-variant-numeric: tabular-nums; }
+.vc-num--up { color: var(--success); font-weight: 700; }
+.vc-num--down { color: var(--danger); font-weight: 700; }
+
+/* ── Resumen / chips de métricas (10/11) ──────────────────────── */
+.vc-summary { display: flex; flex-wrap: wrap; gap: var(--space-3); border-top: 1px solid var(--line); margin-top: var(--space-4); padding-top: var(--space-4); }
+.vc-summary__item { display: flex; flex-direction: column; gap: 2px; padding-right: var(--space-6); border-right: 1px solid var(--line); }
+.vc-summary__item:last-child { border-right: 0; }
+.vc-summary__item strong { font-family: var(--font-display); font-size: 22px; line-height: 1.1; }
+.vc-summary__item span { font-size: 12.5px; color: var(--ink-muted); }
+
+/* ── Agrupación por carrera (09) ──────────────────────────────── */
+.vc-groups { display: flex; flex-direction: column; gap: var(--space-4); }
+.vc-group {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft); overflow: hidden;
+}
+.vc-group > summary {
+  display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+  padding: var(--space-4) var(--space-6); cursor: pointer; list-style: none;
+}
+.vc-group > summary::-webkit-details-marker { display: none; }
+.vc-group > summary:hover { background: var(--paper-soft); }
+.vc-group__icon {
+  width: 36px; height: 36px; border-radius: 50%; flex: none;
+  background: var(--danger-bg); color: var(--terracotta-deep);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.vc-group__title { font-family: var(--font-display); font-size: 19px; line-height: 24px; margin: 0; flex: 1 1 auto; min-width: 0; }
+.vc-group__meta { display: flex; gap: var(--space-3); flex-wrap: wrap; color: var(--ink-soft); font-size: 13px; }
+.vc-group__chev { color: var(--ink-muted); transition: transform .15s ease; flex: none; }
+.vc-group[open] > summary .vc-group__chev { transform: rotate(180deg); }
+.vc-group__table { border: 0; border-top: 1px solid var(--line); border-radius: 0; }
+.vc-group__more {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-3) var(--space-6); border-top: 1px solid var(--line);
+  font-size: 14px; font-weight: 600; color: var(--terracotta-deep);
+}
+.vc-group__more:hover { background: var(--paper-soft); text-decoration: none; }
+
+/* ── Donut + leyenda (09) ─────────────────────────────────────── */
+.vc-donut-wrap { display: flex; gap: var(--space-6); align-items: center; flex-wrap: wrap; }
+.vc-donut-legend { display: flex; flex-direction: column; gap: var(--space-3); flex: 1 1 160px; min-width: 0; }
+.vc-donut-legend .row { display: flex; align-items: baseline; gap: var(--space-2); font-size: 13.5px; color: var(--ink-soft); }
+.vc-donut-legend .row .dot { align-self: center; }
+.vc-donut-legend .row b { margin-left: auto; color: var(--ink); font-variant-numeric: tabular-nums; }
+.vc-donut-legend .row small { display: block; width: 100%; color: var(--ink-muted); font-size: 12.5px; }
+.vc-donut-legend .rowline { display: flex; align-items: center; gap: var(--space-2); }
+.vc-donut-legend .pct { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* ── Paginación solo CSS (10/11) ──────────────────────────────── */
+.vc-pagewrap { position: relative; }
+.vc-pager { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: var(--space-3); margin-top: var(--space-3); }
+.vc-pager__pages { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.vc-pagewrap input[type="radio"] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.vc-pager__pages label {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 8px;
+  border: 1px solid var(--line); border-radius: var(--radius-input); background: var(--surface);
+  color: var(--ink-soft); font-size: 13px; font-weight: 600; cursor: pointer; user-select: none;
+}
+.vc-pager__pages label:hover { border-color: var(--terracotta); color: var(--terracotta-deep); }
+.vc-pager__info { font-size: 13px; color: var(--ink-muted); margin-left: auto; }
+
+/* ── Notas de fuente (08–12) ──────────────────────────────────── */
+.vc-source { color: var(--ink-muted); font-size: 12.5px; margin: calc(-1 * var(--space-4)) 0 var(--space-6); }
+
+/* ── CTA de ancho completo (09) ────────────────────────────────── */
+.vc-cta { width: 100%; margin-top: var(--space-3); justify-content: center; }
+
+/* ── Valores con color en tablas (12) ─────────────────────────── */
+.vc-val--ok { color: var(--success); font-weight: 700; }
+.vc-val--bad { color: var(--danger); font-weight: 700; }
+.vc-val--warn { color: var(--warning); font-weight: 700; }
+
+/* ── Barra compacta dentro de celda (12) ──────────────────────── */
+.vc-cellbar { display: flex; align-items: center; gap: var(--space-2); min-width: 150px; }
+.vc-cellbar .vc-hbar__track { flex: 1 1 auto; height: 10px; }
+.vc-cellbar b { font-variant-numeric: tabular-nums; font-size: 13.5px; white-space: nowrap; }
